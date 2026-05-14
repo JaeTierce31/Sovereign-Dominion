@@ -80,7 +80,7 @@ export class GaussianRenderer {
       size: packed.byteLength,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
-    device.queue.writeBuffer(this.splatBuffer, 0, packed);
+    device.queue.writeBuffer(this.splatBuffer, 0, packed as unknown as ArrayBuffer);
 
     this.indexBuffer = device.createBuffer({
       size: splatData.count * 4,
@@ -98,7 +98,11 @@ export class GaussianRenderer {
     });
     device.queue.writeBuffer(this.violationBuffer, 0, new Uint32Array(splatData.count));
 
-    this.sortKernel = await RadixSortKernel.create(device);
+    this.sortKernel = new RadixSortKernel({
+      device,
+      keys: this.indexBuffer!,
+      count: splatData.count,
+    });
 
     const module = device.createShaderModule({ code: SHADER_CODE });
     this.pipeline = device.createRenderPipeline({
@@ -114,7 +118,7 @@ export class GaussianRenderer {
 
   render(viewProj: Float32Array) {
     if (!this.device || !this.pipeline) return;
-    this.device.queue.writeBuffer(this.uniformBuffer!, 0, viewProj);
+    this.device.queue.writeBuffer(this.uniformBuffer!, 0, viewProj as unknown as ArrayBuffer);
 
     const commandEncoder = this.device.createCommandEncoder();
     const textureView = (this.device as any).context.getCurrentTexture().createView();
@@ -129,6 +133,6 @@ export class GaussianRenderer {
   }
 
   updateViolations(mask: Uint32Array) {
-    this.device?.queue.writeBuffer(this.violationBuffer!, 0, mask);
+    this.device?.queue.writeBuffer(this.violationBuffer!, 0, mask as unknown as ArrayBuffer);
   }
 }

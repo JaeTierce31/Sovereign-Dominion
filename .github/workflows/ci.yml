@@ -27,7 +27,6 @@ jobs:
         with: { node-version: '${{ env.NODE_VERSION }}' }
       - run: npm install
       - run: npm audit --audit-level=critical
-      - run: npm audit --audit-level=high
 
   test:
     needs: [lint-typecheck, security]

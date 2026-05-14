@@ -12,7 +12,7 @@ export interface BlueprintElement {
 export async function exportIFC(elements: BlueprintElement[], projectName: string): Promise<Uint8Array> {
   const ifc = new IfcAPI();
   await ifc.Init();
-  const modelID = ifc.OpenModel();
+  const modelID: number = (ifc as any).CreateModel?.({ schema: 'IFC2X3', name: projectName }) ?? (ifc as any).OpenModel(new Uint8Array(0));
   (ifc as any).BeginModel(modelID);
 
   (ifc as any).CreateIfcEntity(modelID, IFCBUILDING, { Name: projectName });

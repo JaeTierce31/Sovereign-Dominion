@@ -27,7 +27,7 @@ self.addEventListener('message', async (event: MessageEvent) => {
     const result = await session.run({ text: inputTensor, speaker_id: speakerTensor });
     const audioData = result.audio.data as Float32Array;
 
-    self.postMessage({ type: 'audio', audioData }, [audioData.buffer]);
+    self.postMessage({ type: 'audio', audioData }, { transfer: [audioData.buffer as ArrayBuffer] });
   }
 });
 

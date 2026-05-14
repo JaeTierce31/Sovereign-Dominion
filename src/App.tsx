@@ -3,10 +3,11 @@ import * as THREE from 'three';
 import { useCameraStream } from './hooks/useCameraStream';
 import { VoiceController } from './voice/voiceController';
 import { calcBlockCount, monteCarloWalledBlocks } from './utils/materialCalculator';
-import { checkWallCompliance, Violation } from './compliance/complianceChecker';
+import { checkWallCompliance, Violation, Rule } from './compliance/complianceChecker';
 import { SupplierPanel } from './components/SupplierPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import rules from './regulatory/rules/retainingWall.json';
+import rulesJson from './regulatory/rules/retainingWall.json';
+const rules = rulesJson as Rule[];
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
