@@ -1,0 +1,23 @@
+[
+  {
+    "id": "IRC-R507-1",
+    "category": "deck",
+    "predicate": { "height_in": { "max": 30 } },
+    "message": "Decks over 30 inches above grade require guardrails per IRC R507",
+    "severity": "critical"
+  },
+  {
+    "id": "IRC-R507-2",
+    "category": "deck",
+    "predicate": { "ledger": { "required": true } },
+    "message": "Ledger board attachment must use approved fasteners per IRC R507.2",
+    "severity": "major"
+  },
+  {
+    "id": "IRC-R507-3",
+    "category": "deck",
+    "predicate": { "joist_span_ft": { "max": 12 } },
+    "message": "Joist span must not exceed IRC span table maximums",
+    "severity": "major"
+  }
+]

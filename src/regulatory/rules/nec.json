@@ -1,0 +1,23 @@
+[
+  {
+    "id": "NEC-230-70",
+    "category": "electrical",
+    "predicate": { "service_entrance": { "required": true } },
+    "message": "Service entrance equipment must be accessible per NEC 230.70",
+    "severity": "critical"
+  },
+  {
+    "id": "NEC-300-5",
+    "category": "underground_wiring",
+    "predicate": { "depth_in": { "min": 24 } },
+    "message": "Underground wiring requires minimum 24-inch burial depth per NEC 300.5",
+    "severity": "major"
+  },
+  {
+    "id": "NEC-GFCI-1",
+    "category": "outdoor_outlets",
+    "predicate": { "gfci_protected": { "required": true } },
+    "message": "All outdoor receptacles must be GFCI protected per NEC 210.8",
+    "severity": "critical"
+  }
+]

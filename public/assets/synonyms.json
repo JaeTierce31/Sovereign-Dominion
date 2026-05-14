@@ -1,0 +1,10 @@
+{
+  "retaining wall": ["gravity wall", "block wall", "keystone wall", "allan block wall", "segmental wall"],
+  "patio": ["hardscape", "outdoor living area", "pavers", "concrete pad", "flagstone area"],
+  "deck": ["outdoor deck", "composite deck", "wood deck", "trex deck", "elevated platform"],
+  "mulch": ["wood chips", "bark mulch", "shredded wood", "ground cover", "landscape mulch"],
+  "gravel": ["crushed stone", "pea gravel", "river rock", "decomposed granite", "limestone chips"],
+  "block": ["retaining block", "landscape block", "wall block", "keystone block", "concrete block"],
+  "soil": ["topsoil", "fill dirt", "garden soil", "compost", "growing medium"],
+  "concrete": ["cement", "ready mix", "mortar", "quikrete", "portland cement"]
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "IRC-R317-1",
+    "category": "patio",
+    "predicate": { "area_sqft": { "max": 200 } },
+    "message": "Patios over 200 sqft may require a permit in most jurisdictions",
+    "severity": "minor"
+  },
+  {
+    "id": "LOCAL-DRAIN-1",
+    "category": "patio",
+    "predicate": { "slope_pct": { "min": 1 } },
+    "message": "Minimum 1% slope required for water drainage away from structures",
+    "severity": "major"
+  }
+]

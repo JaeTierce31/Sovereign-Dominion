@@ -1,0 +1,23 @@
+[
+  {
+    "id": "OSHA-1926-502",
+    "category": "fall_protection",
+    "predicate": { "height_ft": { "min": 6 } },
+    "message": "Fall protection required for work at heights ≥6 ft per OSHA 1926.502",
+    "severity": "critical"
+  },
+  {
+    "id": "OSHA-1926-1052",
+    "category": "stairways",
+    "predicate": { "rise_in": { "max": 9.5 } },
+    "message": "Stair rise must not exceed 9.5 inches per OSHA 1926.1052",
+    "severity": "major"
+  },
+  {
+    "id": "OSHA-1926-651",
+    "category": "excavation",
+    "predicate": { "depth_ft": { "min": 5 } },
+    "message": "Excavations ≥5 ft require protective systems per OSHA 1926.651",
+    "severity": "critical"
+  }
+]

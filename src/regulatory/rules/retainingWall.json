@@ -1,0 +1,23 @@
+[
+  {
+    "id": "IRC-R404-1",
+    "category": "retaining_wall",
+    "predicate": { "height_ft": { "max": 4 } },
+    "message": "Retaining walls over 4 ft require a licensed engineer stamp per IRC R404.1",
+    "severity": "critical"
+  },
+  {
+    "id": "IRC-R404-2",
+    "category": "retaining_wall",
+    "predicate": { "setback_ft": { "min": 2 } },
+    "message": "Minimum 2 ft setback from property line required per IRC R404",
+    "severity": "major"
+  },
+  {
+    "id": "IBC-1806-3",
+    "category": "retaining_wall",
+    "predicate": { "height_ft": { "max": 8 } },
+    "message": "Retaining walls over 8 ft require special inspection per IBC 1806.3",
+    "severity": "critical"
+  }
+]

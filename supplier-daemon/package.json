@@ -1,0 +1,19 @@
+{
+  "name": "sovereign-supplier-daemon",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Supplier catalog sync daemon for Sovereign Dominion",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "helia": "^4.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.2"
+  }
+}
