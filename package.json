@@ -16,7 +16,7 @@
     "test:e2e": "playwright test --config=tests/e2e/playwright.config.ts",
     "audit": "npm audit && npx snyk test",
     "build:wasm": "wasm-pack build src/search/sovereign-search --target web && wasm-pack build src/trust/qssm-rs --target web",
-    "deploy:workers": "wrangler deploy worker/supplierProxy.js && wrangler deploy worker/weatherProxy.js && wrangler deploy worker/solarProxy.js",
+    "deploy:workers": "wrangler deploy -c worker/wrangler.supplier.toml && wrangler deploy -c worker/wrangler.weather.toml && wrangler deploy -c worker/wrangler.solar.toml",
     "deploy:contracts": "hardhat run scripts/deploySupplierRegistry.ts --network polygon && hardhat run scripts/deployChangeOrderLog.ts --network polygon"
   },
   "dependencies": {

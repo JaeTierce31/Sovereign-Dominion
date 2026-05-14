@@ -53,12 +53,30 @@ jobs:
           directory: dist
           branch: ${{ github.head_ref }}
 
+  deploy-workers:
+    if: github.ref == 'refs/heads/main'
+    needs: [test]
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}' }
+      - run: npm install
+      - run: npx wrangler deploy -c worker/wrangler.supplier.toml
+      - run: npx wrangler deploy -c worker/wrangler.weather.toml
+      - run: npx wrangler deploy -c worker/wrangler.solar.toml
+
   deploy-production:
     if: github.ref == 'refs/heads/main'
     needs: [test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}' }
       - run: npm install && npm run build
       - uses: cloudflare/pages-action@v1
         with:

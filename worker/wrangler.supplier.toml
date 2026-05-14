@@ -1,0 +1,11 @@
+name = "sovereign-supplier-proxy"
+main = "supplierProxy.js"
+compatibility_date = "2024-01-01"
+account_id = "53528ec5aa0c18c03cb6fddc2ad38af1"
+
+[[kv_namespaces]]
+binding = "SUPPLIER_CACHE"
+id = "45a19cdccf2e48d29c38a12e0b00ddda"
+
+# Secret required: ONE_BUILD_KEY
+# Set via: wrangler secret put ONE_BUILD_KEY

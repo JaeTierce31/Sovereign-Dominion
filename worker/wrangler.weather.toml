@@ -1,0 +1,11 @@
+name = "sovereign-weather-proxy"
+main = "weatherProxy.js"
+compatibility_date = "2024-01-01"
+account_id = "53528ec5aa0c18c03cb6fddc2ad38af1"
+
+[[kv_namespaces]]
+binding = "WEATHER_CACHE"
+id = "34cb96732ff7438f9002799d712e454a"
+
+# Secret required: WEATHER_KEY
+# Set via: wrangler secret put WEATHER_KEY
