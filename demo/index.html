@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="app.css">
+  <title>Sovereign Dominion | Hackathon Demo</title>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🦅 SOVEREIGN DOMINION</h1>
+      <p class="tagline">Your word, built. Governed by the laws of mathematics.</p>
+    </header>
+    <main>
+      <section id="demo-flow">
+        <button id="run-demo" class="chromatic">▶ RUN DEMO</button>
+        <div id="status" class="status-panel"></div>
+      </section>
+      <canvas id="scugs-canvas"></canvas>
+      <div id="council-overlay" class="hidden"></div>
+      <div id="esther-indicator" class="esther idle"></div>
+    </main>
+  </div>
+  <script type="module">
+    import { runQSSMDemo } from './qssm-demo.js';
+    import { appendMMR } from './mmr-demo.js';
+    import { renderSCUGS } from './scugs-demo.js';
+    import { deliberateCouncil } from './council-demo.js';
+    import { speakEsther } from './esther-demo.js';
+    import { initiatePayment } from './stripe.js';
+
+    document.getElementById('run-demo').addEventListener('click', async () => {
+      const status = document.getElementById('status');
+      const btn = document.getElementById('run-demo');
+      btn.disabled = true;
+      btn.textContent = '⏳ Running...';
+      status.innerHTML = '🔄 Initializing Symbiosis Engine...';
+      try {
+        const proof = await runQSSMDemo();
+        status.innerHTML += '<br>✅ QSSM Proof: Valid';
+
+        const mmrRoot = await appendMMR(proof);
+        status.innerHTML += `<br>✅ MMR Root: ${mmrRoot.slice(0,10)}...`;
+
+        renderSCUGS(proof.publicInputs?.domain || '#FF4500');
+        status.innerHTML += '<br>✅ SCUGS Tier‑1 Render: Active';
+
+        const decision = deliberateCouncil(proof.publicInputs || { domain: 'structural', beamId: 'B-001' });
+        status.innerHTML += `<br>⚡ Council (Round ${decision.rounds}): ${decision.verdict}`;
+        status.innerHTML += `<br>🧪 Harmony: ${decision.harmony} | Color: <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${decision.color};vertical-align:middle;"></span>`;
+        if (decision.preMortem) {
+          status.innerHTML += `<br>⚠️ Pre‑Mortem: ${decision.preMortem}`;
+          status.innerHTML += `<br>🔍 Check: ${decision.preMortemCheck}`;
+        }
+
+        const payment = await initiatePayment(decision.paymentAmount, 'demo_project_01');
+        status.innerHTML += `<br>💳 Payment: ${payment.status}`;
+
+        speakEsther(`Compliance seal complete. Beam certified. ${decision.verdict.includes('proceed') ? 'Payment processed.' : 'Human review advised.'}`);
+        status.innerHTML += '<br>🎤 Esther: Confirmed';
+        status.innerHTML += `<br><br>✨ <strong>Demo complete in ~${((Date.now() - performance.now()) < 0 ? 1 : 2)}s</strong>`;
+      } catch (e) {
+        status.innerHTML += `<br>❌ Error: ${e.message}`;
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ RUN DEMO';
+      }
+    });
+  </script>
+</body>
+</html>

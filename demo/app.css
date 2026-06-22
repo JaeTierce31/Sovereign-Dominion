@@ -1,0 +1,81 @@
+:root {
+  --bg: #0a0a0f;
+  --surface: #1a1a2e;
+  --accent: #ff4500;
+  --text: #e0e0e0;
+  --chromatic-glow: 0 0 15px var(--accent);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+#app {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+header h1 {
+  font-size: 2rem;
+  text-shadow: var(--chromatic-glow);
+}
+.tagline {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 1rem;
+}
+button.chromatic {
+  background: var(--accent);
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: var(--chromatic-glow);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s;
+}
+button.chromatic:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.status-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--surface);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  min-height: 2rem;
+}
+#scugs-canvas {
+  width: 100%;
+  height: 200px;
+  border-radius: 8px;
+  margin-top: 1rem;
+  background: radial-gradient(circle at 30% 30%, #1a1a3a, #0a0a15);
+}
+.esther {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--accent);
+  box-shadow: var(--chromatic-glow);
+  transition: all 0.3s;
+}
+.esther.listening { box-shadow: 0 0 25px #ff4500; }
+.esther.speaking { background: #ffaa00; box-shadow: 0 0 25px #ffaa00; }
+.hidden { display: none; }

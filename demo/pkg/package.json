@@ -1,0 +1,15 @@
+{
+  "name": "moloch-mmr",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "moloch_mmr_bg.wasm",
+    "moloch_mmr.js",
+    "moloch_mmr.d.ts"
+  ],
+  "main": "moloch_mmr.js",
+  "types": "moloch_mmr.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
