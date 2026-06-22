@@ -85,6 +85,7 @@
     import { appendMMR } from './mmr-demo.js';
     import { renderSCUGS } from './scugs-demo.js';
     import { deliberateCouncil, animateCouncil } from './council-demo.js';
+    import { orchestrateHermes } from './hermes.js';
     import { speakEsther } from './esther-demo.js';
     import { initiatePayment } from './stripe.js';
     import { launchConfetti } from './confetti.js';
@@ -178,9 +179,15 @@
         addStatus('✅ SCUGS Tier‑1 Render: Active');
         activateStep(4);
 
-        const decision = deliberateCouncil(proof.publicInputs || { domain: 'structural', beamId: 'B-001' });
+        const hermesResult = await orchestrateHermes(
+          `Assess beam ${proof.publicInputs?.beamId || 'B-001'} structural compliance and route to Chromatic Council for deliberation.`
+        );
+        addStatus(`🧠 Hermes: ${hermesResult.orchestration}`);
+
+        const decision = await deliberateCouncil(proof.publicInputs || { domain: 'structural', beamId: 'B-001' });
         animateCouncil(decision);
-        addStatus(`⚡ Council (Round ${decision.rounds}): ${decision.verdict}`);
+        const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
+        addStatus(`⚡ Council (Round ${decision.rounds}): ${decision.verdict} <span class="tag">${councilLabel}</span>`);
         addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span class="swatch" style="background:${decision.color};"></span>`);
         if (decision.preMortem) {
           addStatus(`⚠️ Pre‑Mortem: ${decision.preMortem}`);

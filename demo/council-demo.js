@@ -1,15 +1,14 @@
 // Chromatic Council with Deep Deliberation and Pre-Mortem
+// Tries the backend /council endpoint (real NVIDIA Nemotron) first, falls back to local mock.
 
-// Animate the Ember→Amber synthesis: blends a color bar and typewrites the rationale.
 export function animateCouncil(decision) {
   const bar = document.getElementById('council-bar');
   if (bar) {
     bar.style.transition = 'none';
-    bar.style.background = '#e63939'; // Ember red
-    // Force reflow so the transition runs from the start color.
+    bar.style.background = '#e63939';
     void bar.offsetWidth;
     bar.style.transition = 'background 1.4s ease';
-    bar.style.background = decision.color; // Amber synthesis
+    bar.style.background = decision.color;
   }
   const out = document.getElementById('council-rationale');
   if (out && decision.amberRationale) {
@@ -65,19 +64,13 @@ function preMortemChallenge(emberRationale, umberRationale, domain) {
   };
 }
 
-export function deliberateCouncil(payload, deepMode = true, preMortem = true) {
+function localDeliberate(payload, deepMode, preMortem) {
   const emberVote = {
-    agent: 'Ember',
-    hue: 0,
-    confidence: 0.92,
-    urgency: 0.6,
+    agent: 'Ember', hue: 0, confidence: 0.92, urgency: 0.6,
     rationale: 'Beam design exceeds IBC 1604 with margin.'
   };
   const umberVote = {
-    agent: 'Umber',
-    hue: 240,
-    confidence: 0.88,
-    urgency: 0.7,
+    agent: 'Umber', hue: 240, confidence: 0.88, urgency: 0.7,
     rationale: 'Deflection analysis shows acceptable limits. Risk is controlled.'
   };
 
@@ -124,6 +117,49 @@ export function deliberateCouncil(payload, deepMode = true, preMortem = true) {
     preMortemCheck: preMortemResult?.recommendedCheck || null,
     emberRationale: emberVote.rationale,
     umberRationale: umberVote.rationale,
-    amberRationale: finalSynthesis.rationale
+    amberRationale: finalSynthesis.rationale,
+    engine: 'mock'
   };
+}
+
+export async function deliberateCouncil(payload, deepMode = true, preMortem = true) {
+  // Try real NVIDIA deliberation via backend
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const query = `Assess structural beam compliance for domain: ${payload?.domain || 'structural'}, beam: ${payload?.beamId || 'B-001'}. Compliance status: ${payload?.compliance || 'PASS'}.`;
+    const res = await fetch('http://localhost:3001/council', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      const preMortemResult = preMortem
+        ? preMortemChallenge(data.ember, data.umber, payload?.domain || 'structural')
+        : null;
+      return {
+        verdict: data.verdict === 'proceed'
+          ? 'Amber Synthesis — proceed with seal'
+          : 'Amber Synthesis — caution, human review advised',
+        paymentAmount: 299,
+        reasoning: data.amber,
+        color: data.color || '#22c55e',
+        harmony: data.harmony || '0.92',
+        rounds: 2,
+        preMortem: preMortemResult?.challenge || null,
+        preMortemCheck: preMortemResult?.recommendedCheck || null,
+        emberRationale: data.ember,
+        umberRationale: data.umber,
+        amberRationale: data.amber,
+        engine: data.mock ? 'mock' : 'nvidia'
+      };
+    }
+  } catch (e) {
+    console.warn('⚠️ Council backend unavailable, using local deliberation:', e.message);
+  }
+
+  return localDeliberate(payload, deepMode, preMortem);
 }
