@@ -9,6 +9,14 @@ pub struct BeamMeasurement {
     pub fire_rating: u64,
 }
 
+#[wasm_bindgen]
+impl BeamMeasurement {
+    #[wasm_bindgen(constructor)]
+    pub fn new(yield_strength: u64, elasticity: u64, deflection_ratio: u64, fire_rating: u64) -> BeamMeasurement {
+        BeamMeasurement { yield_strength, elasticity, deflection_ratio, fire_rating }
+    }
+}
+
 /// Beam compliance requirements
 #[wasm_bindgen]
 pub struct BeamRequirements {
@@ -16,6 +24,14 @@ pub struct BeamRequirements {
     pub min_elasticity: u64,
     pub max_deflection: u64,
     pub min_fire_rating: u64,
+}
+
+#[wasm_bindgen]
+impl BeamRequirements {
+    #[wasm_bindgen(constructor)]
+    pub fn new(min_yield_strength: u64, min_elasticity: u64, max_deflection: u64, min_fire_rating: u64) -> BeamRequirements {
+        BeamRequirements { min_yield_strength, min_elasticity, max_deflection, min_fire_rating }
+    }
 }
 
 /// Generate a QSSM compliance proof for beam structural data.

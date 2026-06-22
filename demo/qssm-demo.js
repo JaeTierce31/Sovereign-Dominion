@@ -17,20 +17,26 @@ async function loadQSSMWasm() {
 export async function runQSSMDemo() {
   const wasmLoaded = await loadQSSMWasm();
 
-  if (wasmLoaded && qssmWasm?.wasm_generate_beam_proof) {
-    const measurement = { yield_strength: 40000n, elasticity: 30000000n, deflection_ratio: 1n, fire_rating: 2n };
-    const requirements = { min_yield_strength: 36000n, min_elasticity: 29000000n, max_deflection: 100n, min_fire_rating: 1n };
-    const start = performance.now();
-    const proofBytes = qssmWasm.wasm_generate_beam_proof(measurement, requirements);
-    const duration = (performance.now() - start).toFixed(2);
-    const valid = qssmWasm.wasm_verify_beam_proof(proofBytes, measurement, requirements);
-    console.log(`[BENCHMARK] QSSM prove: ${duration}ms, verify: ${valid}`);
-    return {
-      proof: proofBytes,
-      publicInputs: { beamId: 'B-001', domain: '#FF4500', compliance: valid ? 'PASS' : 'FAIL' },
-      timestamp: Date.now(),
-      benchmarkMs: duration
-    };
+  if (wasmLoaded && qssmWasm?.wasm_generate_beam_proof && qssmWasm?.BeamMeasurement) {
+    try {
+      // Construct real wasm-bindgen class instances (constructors required)
+      const measurement = new qssmWasm.BeamMeasurement(40000n, 30000000n, 1n, 2n);
+      const requirements = new qssmWasm.BeamRequirements(36000n, 29000000n, 100n, 1n);
+      const start = performance.now();
+      const proofBytes = qssmWasm.wasm_generate_beam_proof(measurement, requirements);
+      const duration = Number((performance.now() - start).toFixed(2));
+      const valid = qssmWasm.wasm_verify_beam_proof(proofBytes, measurement, requirements);
+      console.log(`[BENCHMARK] QSSM prove: ${duration}ms, verify: ${valid}`);
+      return {
+        proof: proofBytes,
+        publicInputs: { beamId: 'B-001', domain: '#FF4500', compliance: valid ? 'PASS' : 'FAIL' },
+        timestamp: Date.now(),
+        benchmarkMs: duration,
+        engine: 'wasm'
+      };
+    } catch (e) {
+      console.warn('⚠️ QSSM WASM execution failed, using mock:', e.message);
+    }
   }
 
   // Mock fallback
@@ -42,6 +48,7 @@ export async function runQSSMDemo() {
     proof: mockProof,
     publicInputs: { beamId: 'B-001', domain: '#FF4500', compliance: 'PASS' },
     timestamp: Date.now(),
-    benchmarkMs: 5
+    benchmarkMs: 5,
+    engine: 'mock'
   };
 }

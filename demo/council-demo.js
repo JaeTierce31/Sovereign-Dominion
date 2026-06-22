@@ -1,5 +1,39 @@
 // Chromatic Council with Deep Deliberation and Pre-Mortem
 
+// Animate the Ember→Amber synthesis: blends a color bar and typewrites the rationale.
+export function animateCouncil(decision) {
+  const bar = document.getElementById('council-bar');
+  if (bar) {
+    bar.style.transition = 'none';
+    bar.style.background = '#e63939'; // Ember red
+    // Force reflow so the transition runs from the start color.
+    void bar.offsetWidth;
+    bar.style.transition = 'background 1.4s ease';
+    bar.style.background = decision.color; // Amber synthesis
+  }
+  const out = document.getElementById('council-rationale');
+  if (out && decision.amberRationale) {
+    typewrite(out, decision.amberRationale);
+  }
+}
+
+function typewrite(el, text, speed = 18) {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = text;
+    return;
+  }
+  el.textContent = '';
+  let i = 0;
+  const tick = () => {
+    el.textContent = text.slice(0, i);
+    if (i < text.length) {
+      i++;
+      setTimeout(tick, speed);
+    }
+  };
+  tick();
+}
+
 function synthesize(emberVote, umberVote, emberWeight, umberWeight) {
   const amberHue = Math.atan2(
     emberWeight * Math.sin(emberVote.hue * Math.PI / 180) + umberWeight * Math.sin(umberVote.hue * Math.PI / 180),

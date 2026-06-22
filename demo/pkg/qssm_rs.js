@@ -15,6 +15,18 @@ export class BeamMeasurement {
         wasm.__wbg_beammeasurement_free(ptr, 0);
     }
     /**
+     * @param {bigint} yield_strength
+     * @param {bigint} elasticity
+     * @param {bigint} deflection_ratio
+     * @param {bigint} fire_rating
+     */
+    constructor(yield_strength, elasticity, deflection_ratio, fire_rating) {
+        const ret = wasm.beammeasurement_new(yield_strength, elasticity, deflection_ratio, fire_rating);
+        this.__wbg_ptr = ret;
+        BeamMeasurementFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
      * @returns {bigint}
      */
     get deflection_ratio() {
@@ -82,6 +94,18 @@ export class BeamRequirements {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_beamrequirements_free(ptr, 0);
+    }
+    /**
+     * @param {bigint} min_yield_strength
+     * @param {bigint} min_elasticity
+     * @param {bigint} max_deflection
+     * @param {bigint} min_fire_rating
+     */
+    constructor(min_yield_strength, min_elasticity, max_deflection, min_fire_rating) {
+        const ret = wasm.beamrequirements_new(min_yield_strength, min_elasticity, max_deflection, min_fire_rating);
+        this.__wbg_ptr = ret;
+        BeamRequirementsFinalization.register(this, this.__wbg_ptr, this);
+        return this;
     }
     /**
      * @returns {bigint}

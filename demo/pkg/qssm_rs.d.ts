@@ -5,9 +5,9 @@
  * Beam structural measurement
  */
 export class BeamMeasurement {
-    private constructor();
     free(): void;
     [Symbol.dispose](): void;
+    constructor(yield_strength: bigint, elasticity: bigint, deflection_ratio: bigint, fire_rating: bigint);
     deflection_ratio: bigint;
     elasticity: bigint;
     fire_rating: bigint;
@@ -18,9 +18,9 @@ export class BeamMeasurement {
  * Beam compliance requirements
  */
 export class BeamRequirements {
-    private constructor();
     free(): void;
     [Symbol.dispose](): void;
+    constructor(min_yield_strength: bigint, min_elasticity: bigint, max_deflection: bigint, min_fire_rating: bigint);
     max_deflection: bigint;
     min_elasticity: bigint;
     min_fire_rating: bigint;
@@ -43,7 +43,6 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_beammeasurement_free: (a: number, b: number) => void;
-    readonly __wbg_beamrequirements_free: (a: number, b: number) => void;
     readonly __wbg_get_beammeasurement_deflection_ratio: (a: number) => bigint;
     readonly __wbg_get_beammeasurement_elasticity: (a: number) => bigint;
     readonly __wbg_get_beammeasurement_fire_rating: (a: number) => bigint;
@@ -52,6 +51,7 @@ export interface InitOutput {
     readonly __wbg_set_beammeasurement_elasticity: (a: number, b: bigint) => void;
     readonly __wbg_set_beammeasurement_fire_rating: (a: number, b: bigint) => void;
     readonly __wbg_set_beammeasurement_yield_strength: (a: number, b: bigint) => void;
+    readonly beammeasurement_new: (a: bigint, b: bigint, c: bigint, d: bigint) => number;
     readonly wasm_generate_beam_proof: (a: number, b: number) => [number, number];
     readonly wasm_verify_beam_proof: (a: number, b: number, c: number, d: number) => number;
     readonly __wbg_set_beamrequirements_max_deflection: (a: number, b: bigint) => void;
@@ -62,6 +62,8 @@ export interface InitOutput {
     readonly __wbg_get_beamrequirements_min_elasticity: (a: number) => bigint;
     readonly __wbg_get_beamrequirements_min_fire_rating: (a: number) => bigint;
     readonly __wbg_get_beamrequirements_min_yield_strength: (a: number) => bigint;
+    readonly beamrequirements_new: (a: bigint, b: bigint, c: bigint, d: bigint) => number;
+    readonly __wbg_beamrequirements_free: (a: number, b: number) => void;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;

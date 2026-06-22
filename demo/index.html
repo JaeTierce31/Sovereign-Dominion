@@ -5,12 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#ff4500">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="app.css">
   <title>Sovereign Dominion | Hackathon Demo</title>
+  <!-- Import map lets the standalone (no-build) demo resolve Three.js from a CDN.
+       If the network is unavailable, the 3D beam silently falls back to the 2D canvas. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://esm.sh/three@0.170.0"
+    }
+  }
+  </script>
 </head>
 <body>
+  <!-- Splash screen -->
+  <div id="splash">
+    <div class="splash-logo">🦅</div>
+    <p class="splash-text">Symbiosis Engine Initializing…</p>
+  </div>
+
   <div id="app">
     <header>
       <h1>🦅 SOVEREIGN DOMINION</h1>
@@ -18,23 +34,97 @@
     </header>
     <main>
       <section id="demo-flow">
+        <div id="steps" aria-hidden="true">
+          <span class="step" data-step="1" title="Voice intake">🎤</span>
+          <span class="step" data-step="2" title="QSSM proof">🔐</span>
+          <span class="step" data-step="3" title="Moloch MMR">🌲</span>
+          <span class="step" data-step="4" title="SCUGS render">👁️</span>
+          <span class="step" data-step="5" title="Chromatic Council">🧠</span>
+          <span class="step" data-step="6" title="Stripe payment">💳</span>
+          <span class="step" data-step="7" title="Sealed">✅</span>
+        </div>
+
         <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
+
+        <!-- QSSM proof certificate -->
+        <div id="proof-card" class="proof-card" aria-hidden="true">
+          <div class="proof-seal">🛡️</div>
+          <div class="proof-title">QSSM v1.1 Compliance Proof</div>
+          <div class="proof-details" id="proof-details"></div>
+          <div class="proof-stamp">VERIFIED</div>
+        </div>
+
+        <!-- 3D/2D beam stage -->
+        <div id="beam-stage">
+          <canvas id="scugs-canvas"></canvas>
+        </div>
+
+        <!-- Chromatic Council -->
+        <section id="council-section">
+          <div id="council-bar"></div>
+          <p id="council-rationale" class="council-rationale"></p>
+        </section>
+
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
       </section>
-      <canvas id="scugs-canvas"></canvas>
+
       <div id="council-overlay" class="hidden"></div>
-      <div id="esther-indicator" class="esther idle"></div>
+
+      <!-- Esther voice -->
+      <div class="esther-stack">
+        <div class="esther-wave" id="esther-wave" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div id="esther-indicator" class="esther idle"></div>
+      </div>
     </main>
   </div>
+
   <script type="module">
     import { runQSSMDemo } from './qssm-demo.js';
     import { appendMMR } from './mmr-demo.js';
     import { renderSCUGS } from './scugs-demo.js';
-    import { deliberateCouncil } from './council-demo.js';
+    import { deliberateCouncil, animateCouncil } from './council-demo.js';
     import { speakEsther } from './esther-demo.js';
     import { initiatePayment } from './stripe.js';
+    import { launchConfetti } from './confetti.js';
+    import { initBeam, setBeamColor, isBeamReady } from './three-beam.js';
 
     let isRunning = false;
+    let beamAvailable = false;
+
+    function dismissSplash() {
+      const splash = document.getElementById('splash');
+      if (splash && !splash.dataset.gone) {
+        splash.dataset.gone = '1';
+        splash.style.opacity = '0';
+        setTimeout(() => splash.remove(), 800);
+      }
+    }
+
+    // Attempt 3D beam init (CDN-loaded Three.js). Never let it block the UI:
+    // the splash dismisses on a hard timer regardless of network speed.
+    (async () => {
+      const stage = document.getElementById('beam-stage');
+      try {
+        beamAvailable = await initBeam(stage);
+        if (beamAvailable) {
+          const c = document.getElementById('scugs-canvas');
+          if (c) c.style.display = 'none'; // hide 2D fallback when 3D is live
+        }
+      } catch { beamAvailable = false; }
+      dismissSplash();
+    })();
+    // Safety: guarantee the splash clears even if Three.js import stalls.
+    setTimeout(dismissSplash, 2500);
+
+    function activateStep(n) {
+      const el = document.querySelector(`.step[data-step="${n}"]`);
+      if (el) el.classList.add('active');
+    }
+    function resetSteps() {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    }
 
     function addStatus(text, cls = '') {
       const status = document.getElementById('status');
@@ -49,41 +139,73 @@
       if (isRunning) return;
       isRunning = true;
 
+      // Haptic feedback (PWA / supported mobile).
+      if (navigator.vibrate) navigator.vibrate(12);
+
       const status = document.getElementById('status');
       const btn = document.getElementById('run-demo');
+      const proofCard = document.getElementById('proof-card');
       btn.disabled = true;
       btn.textContent = '⏳ Running...';
       status.innerHTML = '';
+      proofCard.classList.remove('show');
+      document.getElementById('council-rationale').textContent = '';
+      resetSteps();
       addStatus('🔄 Initializing Symbiosis Engine...');
+      activateStep(1);
 
       const t0 = performance.now();
       try {
         const proof = await runQSSMDemo();
-        addStatus(`✅ QSSM Proof: Valid — ${proof.benchmarkMs}ms`);
+        const engineLabel = proof.engine === 'wasm' ? 'WASM' : 'mock';
+        addStatus(`✅ QSSM Proof: Valid — ${proof.benchmarkMs}ms <span class="tag">${engineLabel}</span>`);
+        // Reveal the proof certificate
+        document.getElementById('proof-details').innerHTML =
+          `Beam ${proof.publicInputs?.beamId} · ${proof.publicInputs?.compliance} · ${proof.benchmarkMs}ms · ${engineLabel}`;
+        proofCard.classList.add('show');
+        activateStep(2);
 
         const mmrRoot = await appendMMR(proof);
         addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}...`);
+        activateStep(3);
 
-        renderSCUGS(proof.publicInputs?.domain || '#FF4500');
+        const compliant = (proof.publicInputs?.compliance || 'PASS') === 'PASS';
+        if (beamAvailable && isBeamReady()) {
+          setBeamColor(compliant);
+        } else {
+          renderSCUGS(proof.publicInputs?.domain || '#FF4500');
+        }
         addStatus('✅ SCUGS Tier‑1 Render: Active');
+        activateStep(4);
 
         const decision = deliberateCouncil(proof.publicInputs || { domain: 'structural', beamId: 'B-001' });
+        animateCouncil(decision);
         addStatus(`⚡ Council (Round ${decision.rounds}): ${decision.verdict}`);
-        addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${decision.color};vertical-align:middle;margin-left:4px;"></span>`);
+        addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span class="swatch" style="background:${decision.color};"></span>`);
         if (decision.preMortem) {
           addStatus(`⚠️ Pre‑Mortem: ${decision.preMortem}`);
           addStatus(`🔍 Check: ${decision.preMortemCheck}`);
         }
+        activateStep(5);
 
         const payment = await initiatePayment(decision.paymentAmount, 'demo_project_01');
         const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
         addStatus(`💳 Payment: ${payLabel}`);
+        activateStep(6);
 
-        speakEsther(`Compliance seal complete. Beam certified. ${decision.verdict.includes('proceed') ? 'Payment processed.' : 'Human review advised.'}`);
+        const proceed = decision.verdict.includes('proceed');
+        speakEsther(`Compliance seal complete. Beam certified. ${proceed ? 'Payment processed.' : 'Human review advised.'}`);
         addStatus('🎤 Esther: Confirmed');
+        activateStep(7);
 
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
         addStatus(`✨ <strong>Demo complete in ${elapsed}s</strong>`);
+
+        // Celebrate a successful, proceed-to-payment run.
+        if (payment.status === 'succeeded' && proceed) {
+          if (navigator.vibrate) navigator.vibrate([10, 40, 20]);
+          launchConfetti();
+        }
       } catch (e) {
         addStatus(`❌ Error: ${e.message}`, 'error');
         console.error(e);

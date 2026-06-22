@@ -4,19 +4,36 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '16kb' }));
 
-// Stripe PaymentIntent endpoint
+// Stripe PaymentIntent endpoint — creates and (in test mode) confirms with a
+// test payment method so the demo surfaces a real `succeeded` status end-to-end.
 app.post('/payment-intent', async (req, res) => {
   try {
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+    const secret = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
+    const stripe = require('stripe')(secret);
     const { amount, projectId } = req.body;
     const safeAmount = Math.max(50, Math.min(parseInt(amount) || 299, 99999));
     const safeProject = String(projectId || 'demo').slice(0, 64);
-    const paymentIntent = await stripe.paymentIntents.create({
+    const isTestKey = secret.startsWith('sk_test_');
+
+    const params = {
       amount: safeAmount,
       currency: 'usd',
       metadata: { projectId: safeProject },
+    };
+    // Only auto-confirm with a test card in test mode (safe, never on live keys).
+    if (isTestKey) {
+      params.payment_method = 'pm_card_visa';
+      params.confirm = true;
+      params.automatic_payment_methods = { enabled: true, allow_redirects: 'never' };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(params);
+    res.json({
+      status: paymentIntent.status,
+      id: paymentIntent.id,
+      amount: safeAmount,
+      clientSecret: paymentIntent.client_secret,
     });
-    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (e) {
     res.status(500).json({ error: 'Payment intent creation failed' });
   }

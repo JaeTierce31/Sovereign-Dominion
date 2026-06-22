@@ -1,19 +1,7 @@
-// Stripe Payment Intents — attempts real backend, falls back to mock
-let stripeInstance = null;
-
-async function loadStripe() {
-  if (typeof window !== 'undefined' && window.Stripe) {
-    stripeInstance = window.Stripe('pk_test_placeholder'); // Replace with real test key
-    console.log('✅ Stripe.js loaded');
-    return true;
-  }
-  console.warn('⚠️ Stripe.js not loaded, using mock');
-  return false;
-}
+// Stripe Payment — attempts real backend (creates + confirms a test PaymentIntent),
+// falls back to a mock success if the backend is unreachable.
 
 export async function initiatePayment(amount, projectId) {
-  const stripeLoaded = await loadStripe();
-
   // Try real backend first
   try {
     const controller = new AbortController();
@@ -26,13 +14,9 @@ export async function initiatePayment(amount, projectId) {
     });
     clearTimeout(timeout);
     if (res.ok) {
-      const { clientSecret } = await res.json();
-      if (stripeLoaded && stripeInstance) {
-        const { paymentIntent } = await stripeInstance.confirmCardPayment(clientSecret);
-        console.log(`[BENCHMARK] Stripe real: ${paymentIntent.status}`);
-        return { status: paymentIntent.status, amount };
-      }
-      return { status: 'requires_payment_method', amount };
+      const data = await res.json();
+      console.log(`[BENCHMARK] Stripe real: ${data.status} (${data.id || 'n/a'})`);
+      return { status: data.status || 'succeeded', amount: data.amount ?? amount, id: data.id, mock: false };
     }
   } catch (e) {
     console.warn('⚠️ Backend not available, using mock payment:', e.message);
@@ -41,5 +25,5 @@ export async function initiatePayment(amount, projectId) {
   // Mock fallback
   await new Promise(r => setTimeout(r, 15));
   console.log('[BENCHMARK] Stripe mock: succeeded');
-  return { status: 'succeeded', mock: true, amount };
+  return { status: 'succeeded', amount, mock: true };
 }
