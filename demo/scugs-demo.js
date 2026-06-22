@@ -31,7 +31,7 @@ export function renderSCUGS(hexColor) {
 
   // Draw compliance label
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.font = `${canvas.width * 0.04}px monospace`;
+  ctx.font = `${Math.max(14, canvas.width * 0.032)}px monospace`;
   ctx.fillText('SCUGS TIER-1 ● BEAM B-001 ● COMPLIANT', canvas.width * 0.05, canvas.height * 0.9);
 }
 

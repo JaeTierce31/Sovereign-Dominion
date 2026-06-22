@@ -41,5 +41,5 @@ export async function initiatePayment(amount, projectId) {
   // Mock fallback
   await new Promise(r => setTimeout(r, 15));
   console.log('[BENCHMARK] Stripe mock: succeeded');
-  return { status: 'succeeded (mock)', amount };
+  return { status: 'succeeded', mock: true, amount };
 }

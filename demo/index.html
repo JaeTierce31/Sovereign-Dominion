@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="app.css">
   <title>Sovereign Dominion | Hackathon Demo</title>
@@ -17,8 +18,8 @@
     </header>
     <main>
       <section id="demo-flow">
-        <button id="run-demo" class="chromatic">▶ RUN DEMO</button>
-        <div id="status" class="status-panel"></div>
+        <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
+        <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
       </section>
       <canvas id="scugs-canvas"></canvas>
       <div id="council-overlay" class="hidden"></div>
@@ -33,42 +34,63 @@
     import { speakEsther } from './esther-demo.js';
     import { initiatePayment } from './stripe.js';
 
+    let isRunning = false;
+
+    function addStatus(text, cls = '') {
+      const status = document.getElementById('status');
+      const line = document.createElement('div');
+      line.className = 'status-line' + (cls ? ' ' + cls : '');
+      line.innerHTML = text;
+      status.appendChild(line);
+      line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     document.getElementById('run-demo').addEventListener('click', async () => {
+      if (isRunning) return;
+      isRunning = true;
+
       const status = document.getElementById('status');
       const btn = document.getElementById('run-demo');
       btn.disabled = true;
       btn.textContent = '⏳ Running...';
-      status.innerHTML = '🔄 Initializing Symbiosis Engine...';
+      status.innerHTML = '';
+      addStatus('🔄 Initializing Symbiosis Engine...');
+
+      const t0 = performance.now();
       try {
         const proof = await runQSSMDemo();
-        status.innerHTML += '<br>✅ QSSM Proof: Valid';
+        addStatus(`✅ QSSM Proof: Valid — ${proof.benchmarkMs}ms`);
 
         const mmrRoot = await appendMMR(proof);
-        status.innerHTML += `<br>✅ MMR Root: ${mmrRoot.slice(0,10)}...`;
+        addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}...`);
 
         renderSCUGS(proof.publicInputs?.domain || '#FF4500');
-        status.innerHTML += '<br>✅ SCUGS Tier‑1 Render: Active';
+        addStatus('✅ SCUGS Tier‑1 Render: Active');
 
         const decision = deliberateCouncil(proof.publicInputs || { domain: 'structural', beamId: 'B-001' });
-        status.innerHTML += `<br>⚡ Council (Round ${decision.rounds}): ${decision.verdict}`;
-        status.innerHTML += `<br>🧪 Harmony: ${decision.harmony} | Color: <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${decision.color};vertical-align:middle;"></span>`;
+        addStatus(`⚡ Council (Round ${decision.rounds}): ${decision.verdict}`);
+        addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${decision.color};vertical-align:middle;margin-left:4px;"></span>`);
         if (decision.preMortem) {
-          status.innerHTML += `<br>⚠️ Pre‑Mortem: ${decision.preMortem}`;
-          status.innerHTML += `<br>🔍 Check: ${decision.preMortemCheck}`;
+          addStatus(`⚠️ Pre‑Mortem: ${decision.preMortem}`);
+          addStatus(`🔍 Check: ${decision.preMortemCheck}`);
         }
 
         const payment = await initiatePayment(decision.paymentAmount, 'demo_project_01');
-        status.innerHTML += `<br>💳 Payment: ${payment.status}`;
+        const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
+        addStatus(`💳 Payment: ${payLabel}`);
 
         speakEsther(`Compliance seal complete. Beam certified. ${decision.verdict.includes('proceed') ? 'Payment processed.' : 'Human review advised.'}`);
-        status.innerHTML += '<br>🎤 Esther: Confirmed';
-        status.innerHTML += `<br><br>✨ <strong>Demo complete in ~${((Date.now() - performance.now()) < 0 ? 1 : 2)}s</strong>`;
+        addStatus('🎤 Esther: Confirmed');
+
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+        addStatus(`✨ <strong>Demo complete in ${elapsed}s</strong>`);
       } catch (e) {
-        status.innerHTML += `<br>❌ Error: ${e.message}`;
+        addStatus(`❌ Error: ${e.message}`, 'error');
         console.error(e);
       } finally {
         btn.disabled = false;
         btn.textContent = '▶ RUN DEMO';
+        isRunning = false;
       }
     });
   </script>

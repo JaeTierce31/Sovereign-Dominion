@@ -35,13 +35,13 @@ export async function runQSSMDemo() {
 
   // Mock fallback
   const mockProof = new Uint8Array(32);
-  crypto.getRandomValues(mockProof);
+  try { crypto.getRandomValues(mockProof); } catch { mockProof.fill(0xAB); }
   await new Promise(r => setTimeout(r, 5));
   console.log('[BENCHMARK] QSSM mock prove: ~5ms');
   return {
     proof: mockProof,
     publicInputs: { beamId: 'B-001', domain: '#FF4500', compliance: 'PASS' },
     timestamp: Date.now(),
-    benchmarkMs: '5 (mock)'
+    benchmarkMs: 5
   };
 }

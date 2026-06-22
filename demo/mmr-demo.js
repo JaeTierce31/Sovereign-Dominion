@@ -18,7 +18,7 @@ export async function appendMMR(proof) {
   const wasmLoaded = await loadMMRWasm();
 
   if (wasmLoaded && mmrWasm?.WasmBeamLogger) {
-    const logger = new mmrWasm.WasmBeamLogger('https://moloch.sovereign.dominion/api');
+    const logger = new mmrWasm.WasmBeamLogger('http://localhost:3001');
     const root = await logger.log_beam_compliance(
       proof.publicInputs?.beamId || 'B-001',
       proof.proof,
