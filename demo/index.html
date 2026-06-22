@@ -103,6 +103,13 @@
               aria-label="Voice input — speak to select scenario"
               title="Say: Chicago Tower, SF Retrofit, or Fail Case">🎤</button>
           <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
+          <button class="voice-btn" style="font-size:0.75rem;padding:0 10px;opacity:0.55;" onclick="document.getElementById('kb-help').style.display='flex'" title="Keyboard shortcuts">⌨️</button>
+        </div>
+
+        <!-- Kiosk mode badge -->
+        <div id="kiosk-badge" style="display:none;align-items:center;gap:6px;font-family:var(--mono);font-size:0.65rem;color:#ffaa00;border:1px solid rgba(255,170,0,0.35);border-radius:12px;padding:3px 10px;margin-bottom:0.5rem;letter-spacing:0.05em;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#ffaa00;animation:pulse 1s ease-in-out infinite;flex-shrink:0;display:inline-block;"></span>
+          KIOSK ACTIVE — press K to stop
         </div>
 
         <!-- QSSM proof certificate -->
@@ -163,7 +170,9 @@
         <details id="debug-panel" class="debug-panel">
           <summary>🔬 Technical Deep Dive</summary>
           <div id="stream-preview" class="stream-preview hidden">
-            <div class="stream-header">NVIDIA NIM Streaming — Live Council Deliberation</div>
+            <div class="stream-header">NVIDIA NIM Streaming — Live Council Deliberation
+              <span id="stream-stats" style="float:right;font-size:0.58rem;opacity:0.6;letter-spacing:.04em;"></span>
+            </div>
             <div id="stream-text" class="stream-text"></div>
           </div>
           <div id="debug-content" class="debug-content"></div>
@@ -444,6 +453,83 @@
       content.innerHTML = html;
     }
 
+    // ── Keyboard shortcuts ──────────────────────────────────────────────────
+    const kbHelp = document.createElement('div');
+    kbHelp.id = 'kb-help';
+    kbHelp.innerHTML = `<div class="kb-inner">
+      <div class="kb-title">⌨️ Keyboard Shortcuts</div>
+      <div class="kb-row"><kbd>1</kbd> Chicago Tower &nbsp; <kbd>2</kbd> SF Retrofit &nbsp; <kbd>3</kbd> FAIL Case</div>
+      <div class="kb-row"><kbd>Enter</kbd> Run Demo &nbsp; <kbd>C</kbd> Compare All</div>
+      <div class="kb-row"><kbd>K</kbd> Toggle Kiosk Mode &nbsp; <kbd>Esc</kbd> Close</div>
+    </div>`;
+    kbHelp.style.cssText = 'display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;';
+    document.body.appendChild(kbHelp);
+
+    const style = document.createElement('style');
+    style.textContent = `.kb-inner{background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:1.5rem 2rem;text-align:center;}.kb-title{font-family:var(--mono);font-size:0.9rem;margin-bottom:1rem;color:var(--accent);letter-spacing:.08em;}.kb-row{font-family:var(--mono);font-size:0.78rem;margin:.4rem 0;opacity:.85;}kbd{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 7px;font-size:0.72rem;}`;
+    document.head.appendChild(style);
+
+    kbHelp.addEventListener('click', e => { if (e.target === kbHelp) kbHelp.style.display = 'none'; });
+
+    document.addEventListener('keydown', e => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === '1') document.querySelector('[data-scenario="chicago"]')?.click();
+      else if (e.key === '2') document.querySelector('[data-scenario="sf"]')?.click();
+      else if (e.key === '3') document.querySelector('[data-scenario="fail"]')?.click();
+      else if ((e.key === 'Enter' || e.key === ' ') && !isRunning) { e.preventDefault(); document.getElementById('run-demo')?.click(); }
+      else if ((e.key === 'c' || e.key === 'C') && !isRunning) document.getElementById('compare-btn')?.click();
+      else if (e.key === 'k' || e.key === 'K') toggleKiosk();
+      else if (e.key === '?' || e.key === '/') { kbHelp.style.display = 'flex'; }
+      else if (e.key === 'Escape') { kbHelp.style.display = 'none'; if (kioskTimer) stopKiosk(); }
+    });
+
+    // ── Kiosk / presentation auto-run mode ─────────────────────────────────
+    let kioskTimer = null;
+    let kioskIndex = 0;
+    const kioskScenarios = ['chicago', 'sf', 'fail'];
+
+    async function kioskStep() {
+      if (!kioskTimer) return;
+      const key = kioskScenarios[kioskIndex % kioskScenarios.length];
+      const card = document.querySelector(`[data-scenario="${key}"]`);
+      if (card) card.click();
+      await delay(600);
+      if (!kioskTimer) return;
+      document.getElementById('run-demo')?.click();
+      kioskIndex++;
+      // Wait for demo to finish (poll isRunning) then pause before next
+      await new Promise(resolve => {
+        const poll = setInterval(() => {
+          if (!isRunning) { clearInterval(poll); resolve(); }
+        }, 400);
+      });
+      if (kioskTimer) kioskTimer = setTimeout(kioskStep, 4000);
+    }
+
+    function toggleKiosk() {
+      if (kioskTimer) { stopKiosk(); } else { startKiosk(); }
+    }
+    function startKiosk() {
+      if (kioskTimer) return;
+      const badge = document.getElementById('kiosk-badge');
+      if (badge) badge.style.display = 'flex';
+      kioskTimer = setTimeout(kioskStep, 2000);
+      addStatus('🎬 Kiosk mode activated — press K or Esc to stop');
+    }
+    function stopKiosk() {
+      clearTimeout(kioskTimer);
+      kioskTimer = null;
+      const badge = document.getElementById('kiosk-badge');
+      if (badge) badge.style.display = 'none';
+      addStatus('⏹ Kiosk mode stopped');
+    }
+
+    // Auto-start kiosk if ?kiosk=1 in URL
+    if (new URLSearchParams(location.search).get('kiosk') === '1') {
+      setTimeout(startKiosk, 1500);
+    }
+
     // ── Compare All Scenarios ───────────────────────────────────────────────
     document.getElementById('compare-btn')?.addEventListener('click', async () => {
       if (isRunning) return;
@@ -579,6 +665,10 @@
         debugPanel.open = true;
         streamPreview.classList.remove('hidden');
         let streamedText = '';
+        const streamStart = performance.now();
+        let streamTokens = 0;
+        const streamStatsEl = document.getElementById('stream-stats');
+        if (streamStatsEl) streamStatsEl.textContent = '';
         fetch('http://localhost:3001/council-stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -599,7 +689,16 @@
               if (!line.startsWith('data: ')) continue;
               const raw = line.slice(6).trim();
               if (raw === '[DONE]') return;
-              try { const { token } = JSON.parse(raw); if (token) { streamedText += token; streamTextEl.textContent = streamedText; } } catch {}
+              try {
+                const { token } = JSON.parse(raw);
+                if (token) {
+                  streamedText += token;
+                  streamTextEl.textContent = streamedText;
+                  streamTokens++;
+                  const ms = Math.round(performance.now() - streamStart);
+                  if (streamStatsEl) streamStatsEl.textContent = `⚡ ${streamTokens} tokens · ${ms}ms`;
+                }
+              } catch {}
             }
           }
         }).catch(e => { if (e.name !== 'AbortError') console.warn('Council SSE:', e.message); });

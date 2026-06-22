@@ -1,9 +1,72 @@
 # Sovereign Dominion
 
-**Voice-First 5D Augmented Intelligence Platform** — *Your word, built.*
+**Voice-First 5D Augmented Intelligence Platform** — *Your word, built. Governed by the laws of mathematics.*
 
 [![CI](https://github.com/jaetierce31/sovereign-dominion/actions/workflows/ci.yml/badge.svg)](https://github.com/jaetierce31/sovereign-dominion/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Proprietary%2FMIT-blue)](LICENSE)
+
+---
+
+## 🏆 Nous Research × NVIDIA × Stripe Hackathon Demo
+
+> **The first AI-governed structural compliance and payment system secured by cryptographic zero-knowledge proofs.**
+
+Open `demo/index.html` in any modern browser to experience the full multi-agent pipeline — no build step required.
+
+### What it demonstrates
+
+```
+Voice Input → Hermes (Nous Hermes-3-405B via NVIDIA NIM) orchestrates:
+  ├─ QSSM: Rust/WASM zero-knowledge compliance proof (<10ms)
+  ├─ Moloch MMR: Merkle Mountain Range immutability log
+  ├─ SCUGS: Real-time I-beam stress heatmap (IBC 1604 visualization)
+  ├─ Chromatic Council: Ember + Umber deliberation via Nemotron-4-340B (SSE streaming)
+  └─ Stripe PaymentIntent: AI-controlled payment gate (blocked on FAIL, confirmed on PASS)
+```
+
+### Sponsor technology integration
+
+| Sponsor | Integration | Where |
+|---------|-------------|-------|
+| **NVIDIA NIM** | `nemotron-4-340b-instruct` for Ember+Umber Council; SSE streaming | `demo/server/index.js` `/council-stream` |
+| **Nous Research** | `hermes-3-llama-3.1-405b` for multi-agent orchestration routing | `demo/server/index.js` `/hermes` |
+| **Stripe** | PaymentIntents API, test mode auto-confirm `pm_card_visa` | `demo/server/index.js` `/payment-intent` |
+
+### Quick demo setup (2 minutes)
+
+```bash
+# 1. Backend (optional — demo works fully in mock mode without API keys)
+cd demo/server
+npm install
+cp .env.example .env        # add NVIDIA_API_KEY and STRIPE_SECRET_KEY
+npm start                   # runs on :3001
+
+# 2. Frontend — no build needed, open directly
+open demo/index.html
+# or serve statically:
+npx serve demo
+```
+
+### Demo scenarios
+
+| Scenario | Key | Result |
+|----------|-----|--------|
+| Chicago Tower (95-story) | `1` | ✅ PASS — 40 ksi yield, IBC compliant, payment succeeds |
+| SF Bay Retrofit (seismic zone 4) | `2` | ✅ PASS — 50 ksi yield, AISC 360 compliant, payment succeeds |
+| Non-compliant beam | `3` | ❌ FAIL — 28 ksi yield (22% below IBC minimum), payment blocked |
+
+**Keyboard shortcuts:** `1/2/3` select scenario · `Enter` runs demo · `C` compares all · `K` toggles kiosk auto-run · `?` shows all shortcuts
+
+**Kiosk / live demo mode:** append `?kiosk=1` to URL for fully automatic cycling through all 3 scenarios
+
+### Why it matters
+
+Construction compliance fraud costs $15B annually in the United States. A single falsified structural certification can lead to catastrophic building failures. Sovereign Dominion replaces paper stamps with:
+
+1. **Cryptographic proof** — QSSM generates an unforgeable ZK proof of material compliance
+2. **AI deliberation** — Independent Ember and Umber agents debate structural risk before any seal can be issued
+3. **Immutable audit trail** — Moloch MMR commits every proof to a Merkle log
+4. **Payment gate** — Stripe PaymentIntent is programmatically blocked by the AI council when non-compliant
 
 ---
 

@@ -1,7 +1,10 @@
 // Moloch MMR append — attempts WASM, falls back to mock
 let mmrWasm = null;
+let mmrLoaded = false;
 
 async function loadMMRWasm() {
+  if (mmrLoaded) return mmrWasm !== null;
+  mmrLoaded = true;
   try {
     const module = await import('./pkg/moloch_mmr.js');
     await module.default();

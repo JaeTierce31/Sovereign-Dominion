@@ -1,7 +1,10 @@
 // QSSM v1.1 Proof Generation — attempts WASM, falls back to mock
 let qssmWasm = null;
+let qssmLoaded = false;
 
 async function loadQSSMWasm() {
+  if (qssmLoaded) return qssmWasm !== null;
+  qssmLoaded = true;
   try {
     const module = await import('./pkg/qssm_rs.js');
     await module.default();
@@ -15,12 +18,11 @@ async function loadQSSMWasm() {
 }
 
 export async function runQSSMDemo(options = {}) {
-  const { forceFailure = false, beamId = 'B-001', domain = '#FF4500' } = options;
+  const { forceFailure = false, beamId = 'B-001', domain = 'structural' } = options;
   const wasmLoaded = await loadQSSMWasm();
 
   if (wasmLoaded && qssmWasm?.wasm_generate_beam_proof && qssmWasm?.BeamMeasurement) {
     try {
-      // FAIL scenario: use below-spec measurements (28 ksi yield < 36 ksi requirement)
       const measurement = forceFailure
         ? new qssmWasm.BeamMeasurement(28000n, 20000000n, 1n, 2n)
         : new qssmWasm.BeamMeasurement(40000n, 30000000n, 1n, 2n);

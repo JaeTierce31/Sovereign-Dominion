@@ -63,14 +63,18 @@ export async function initBeam(container) {
   return true;
 }
 
+let resizeTimer = null;
 function onResize() {
-  if (!renderer || !camera) return;
-  const c = renderer.domElement.parentElement;
-  if (!c) return;
-  const w = c.clientWidth, h = c.clientHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (!renderer || !camera) return;
+    const c = renderer.domElement.parentElement;
+    if (!c) return;
+    const w = c.clientWidth, h = c.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }, 120);
 }
 
 export function setBeamColor(compliant) {
