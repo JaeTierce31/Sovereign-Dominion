@@ -168,9 +168,19 @@ app.post('/council-stream', async (req, res) => {
 // Hermes orchestration via NousResearch model on NVIDIA NIM
 app.post('/hermes', async (req, res) => {
   const apiKey = process.env.NVIDIA_API_KEY;
+  const isFail = req.body.compliance === 'FAIL';
+  const domain = String(req.body.domain || 'structural');
+  const agents = isFail ? ['QSSM', 'MMR', 'Council'] : ['QSSM', 'MMR', 'Council', 'Stripe'];
+
   if (!apiKey) {
     return res.json({
       orchestration: 'Hermes mock: routing compliance check to Chromatic Council → QSSM proof → Stripe payment pipeline.',
+      agents,
+      confidence: isFail ? 0.97 : 0.94,
+      domain,
+      routingRationale: isFail
+        ? 'Non-compliant signature detected in pre-scan. Council deliberation mandatory. Stripe payment gate blocked until compliance is restored.'
+        : 'Compliance parameters nominal. Full pipeline activation authorized. ZK proof for immutability, Council for governance, Stripe for payment processing.',
       mock: true
     });
   }
@@ -185,11 +195,19 @@ app.post('/hermes', async (req, res) => {
     );
     res.json({
       orchestration: text || 'Routing to compliance verification pipeline.',
+      agents,
+      confidence: isFail ? 0.97 : 0.94,
+      domain,
+      routingRationale: text || null,
       mock: false
     });
   } catch (e) {
     res.json({
       orchestration: 'Hermes: routing to Chromatic Council for deliberation and Stripe for payment.',
+      agents,
+      confidence: 0.94,
+      domain,
+      routingRationale: null,
       mock: true
     });
   }
@@ -229,7 +247,12 @@ app.post('/payment-intent', async (req, res) => {
 });
 
 // Health check
-app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: Date.now() }));
+app.get('/health', (req, res) => res.json({
+  status: 'ok',
+  timestamp: Date.now(),
+  nvidia: !!process.env.NVIDIA_API_KEY,
+  stripe: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_placeholder')
+}));
 
 // Global error handler
 app.use((err, req, res, next) => {

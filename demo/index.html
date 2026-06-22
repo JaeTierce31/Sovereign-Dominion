@@ -48,6 +48,13 @@
       <div class="metric-cell"><div class="metric-label">Stripe</div><div class="metric-value" id="m-stripe">—</div></div>
     </div>
 
+    <!-- System status chips -->
+    <div class="system-status">
+      <span class="sys-chip" id="sys-nvidia"><span class="sys-dot"></span>NVIDIA NIM</span>
+      <span class="sys-chip" id="sys-stripe"><span class="sys-dot"></span>Stripe</span>
+      <span class="sys-chip" id="sys-wasm"><span class="sys-dot"></span>QSSM WASM</span>
+    </div>
+
     <main>
       <section id="demo-flow">
 
@@ -106,6 +113,12 @@
           <div class="proof-stamp" id="proof-stamp">VERIFIED</div>
         </div>
 
+        <!-- IBC Compliance explanation panel -->
+        <div id="compliance-panel" class="compliance-panel hidden" aria-hidden="true">
+          <div class="compliance-title">📋 IBC 1604 Structural Assessment</div>
+          <div id="compliance-rules" class="compliance-rules"></div>
+        </div>
+
         <!-- 3D/2D beam stage -->
         <div id="beam-stage">
           <canvas id="scugs-canvas"></canvas>
@@ -127,7 +140,24 @@
           <p id="council-rationale" class="council-rationale"></p>
         </section>
 
+        <!-- Hermes routing card -->
+        <div id="hermes-card" class="hermes-card hidden" aria-hidden="true">
+          <div class="hermes-header">🧠 Hermes Orchestration</div>
+          <div id="hermes-pipeline" class="hermes-pipeline"></div>
+          <div id="hermes-rationale" class="hermes-rationale"></div>
+        </div>
+
+        <!-- Stripe receipt card -->
+        <div id="stripe-receipt" class="stripe-receipt hidden" aria-hidden="true">
+          <div class="receipt-header">💳 Payment Receipt</div>
+          <div id="receipt-rows" class="receipt-rows"></div>
+        </div>
+
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
+
+        <!-- Compare all scenarios -->
+        <button id="compare-btn" class="compare-btn">⚖️ Compare All Scenarios</button>
+        <div id="comparison-table" class="comparison-table hidden"></div>
 
         <!-- Technical Deep Dive — NVIDIA SSE stream + post-run debug data -->
         <details id="debug-panel" class="debug-panel">
@@ -166,15 +196,46 @@
     let isRunning = false;
     let beamAvailable = false;
 
-    // Active scenario — default to Chicago Tower (PASS)
     let activeScenario = {
-      scenario: 'chicago',
-      beamId: 'B-001',
-      domain: 'structural',
-      forceFailure: false,
+      scenario: 'chicago', beamId: 'B-001', domain: 'structural', forceFailure: false,
       label: 'Chicago Tower',
       query: 'Assess structural beam B-001 for 95-story Chicago tower. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.'
     };
+
+    // ── URL deep-link: ?scenario=chicago|sf|fail ────────────────────────────
+    const urlScenario = new URLSearchParams(location.search).get('scenario');
+    if (urlScenario) {
+      const sc = document.querySelector(`[data-scenario="${urlScenario}"]`);
+      if (sc) {
+        document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+        sc.classList.add('active');
+        activeScenario = {
+          scenario: sc.dataset.scenario, beamId: sc.dataset.beamId,
+          domain: sc.dataset.domain, forceFailure: sc.dataset.fail === 'true',
+          label: sc.dataset.label, query: sc.dataset.query
+        };
+      }
+    }
+
+    // ── System status check ─────────────────────────────────────────────────
+    (async function fetchSystemStatus() {
+      const setChip = (id, ok) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const dot = el.querySelector('.sys-dot');
+        if (dot) dot.style.background = ok ? 'var(--ok)' : '#444';
+        el.classList.toggle('online', ok);
+      };
+      setChip('sys-wasm', typeof WebAssembly !== 'undefined');
+      try {
+        const res = await fetch('http://localhost:3001/health', { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+          const { nvidia, stripe } = await res.json();
+          setChip('sys-nvidia', !!nvidia);
+          setChip('sys-stripe', !!stripe);
+        } else { setChip('sys-nvidia', false); setChip('sys-stripe', false); }
+      } catch { setChip('sys-nvidia', false); setChip('sys-stripe', false); }
+    })();
 
     // ── Splash dismiss ──────────────────────────────────────────────────────
     function dismissSplash() {
@@ -189,10 +250,7 @@
       const stage = document.getElementById('beam-stage');
       try {
         beamAvailable = await initBeam(stage);
-        if (beamAvailable) {
-          const c = document.getElementById('scugs-canvas');
-          if (c) c.style.display = 'none';
-        }
+        if (beamAvailable) { const c = document.getElementById('scugs-canvas'); if (c) c.style.display = 'none'; }
       } catch { beamAvailable = false; }
       dismissSplash();
     })();
@@ -205,12 +263,9 @@
         document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
         activeScenario = {
-          scenario: card.dataset.scenario,
-          beamId: card.dataset.beamId,
-          domain: card.dataset.domain,
-          forceFailure: card.dataset.fail === 'true',
-          label: card.dataset.label,
-          query: card.dataset.query
+          scenario: card.dataset.scenario, beamId: card.dataset.beamId,
+          domain: card.dataset.domain, forceFailure: card.dataset.fail === 'true',
+          label: card.dataset.label, query: card.dataset.query
         };
       });
     });
@@ -222,19 +277,14 @@
       voiceBtn.style.display = 'none';
     } else {
       const recognition = new SpeechRecognitionAPI();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+      recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
       recognition.onresult = (e) => {
         const t = e.results[0][0].transcript.toLowerCase();
         let target = null;
         if (t.includes('chicago') || t.includes('tower') || t.includes('first') || t.includes('one')) target = 'chicago';
         else if (t.includes('san francisco') || t.includes('sf') || t.includes('bridge') || t.includes('seismic') || t.includes('retrofit')) target = 'sf';
         else if (t.includes('fail') || t.includes('non') || t.includes('bad') || t.includes('invalid') || t.includes('error')) target = 'fail';
-        if (target) {
-          const card = document.querySelector(`[data-scenario="${target}"]`);
-          if (card) card.click();
-        }
+        if (target) { const card = document.querySelector(`[data-scenario="${target}"]`); if (card) card.click(); }
         voiceBtn.classList.remove('listening');
       };
       recognition.onerror = () => voiceBtn.classList.remove('listening');
@@ -247,13 +297,14 @@
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+
     function activateStep(n) {
       const el = document.querySelector(`.step[data-step="${n}"]`);
       if (el) el.classList.add('active');
     }
-    function resetSteps() {
-      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    }
+    function resetSteps() { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); }
+
     function addStatus(text, cls = '') {
       const status = document.getElementById('status');
       const line = document.createElement('div');
@@ -262,6 +313,7 @@
       status.appendChild(line);
       line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+
     function setMetric(id, value) {
       const el = document.getElementById(id);
       if (!el) return;
@@ -270,17 +322,65 @@
       void el.offsetWidth;
       el.classList.add('metric-live');
     }
-    const delay = ms => new Promise(r => setTimeout(r, ms));
+
     function typewriteEl(el, text, speed = 8) {
       return new Promise(resolve => {
-        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-          el.textContent = text; return resolve();
-        }
-        el.textContent = '';
-        let i = 0;
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { el.textContent = text; return resolve(); }
+        el.textContent = ''; let i = 0;
         const tick = () => { el.textContent = text.slice(0, ++i); if (i < text.length) setTimeout(tick, speed); else resolve(); };
         tick();
       });
+    }
+
+    function showCompliancePanel(proof, scenario) {
+      const panel = document.getElementById('compliance-panel');
+      const rulesEl = document.getElementById('compliance-rules');
+      if (!panel || !rulesEl) return;
+      const compliant = proof.publicInputs?.compliance === 'PASS';
+      const yieldKsi = scenario.forceFailure ? 28 : (scenario.domain === 'seismic' ? 50 : 40);
+      const modMsi = scenario.forceFailure ? 20 : 29;
+      const rules = [
+        { label: 'IBC 1604.3 — Min. Yield Strength', value: `${yieldKsi} ksi`, req: '≥ 36 ksi', pass: yieldKsi >= 36 },
+        { label: 'AISC 360 — Elastic Modulus',        value: `${modMsi} Msi`,  req: '≥ 29 Msi',  pass: modMsi >= 29 },
+        { label: 'IBC 1604.3.3 — Safety Factor',      value: compliant ? '1.67' : 'EXCEEDED', req: 'Ω₀ ≤ 2.0', pass: compliant }
+      ];
+      rulesEl.innerHTML = rules.map(r => `<div class="ibc-rule ${r.pass ? 'pass' : 'fail'}">
+        <span class="ibc-check">${r.pass ? '✓' : '✗'}</span>
+        <span class="ibc-label">${r.label}</span>
+        <span class="ibc-val">${r.value}</span>
+        <span class="ibc-req">${r.req}</span>
+      </div>`).join('');
+      panel.classList.remove('hidden');
+      panel.setAttribute('aria-hidden', 'false');
+    }
+
+    function showHermesCard(h) {
+      const card = document.getElementById('hermes-card');
+      const pipelineEl = document.getElementById('hermes-pipeline');
+      const rationaleEl = document.getElementById('hermes-rationale');
+      if (!card || !pipelineEl) return;
+      const active = new Set(h.agents || ['QSSM', 'MMR', 'Council', 'Stripe']);
+      pipelineEl.innerHTML = ['QSSM', 'MMR', 'Council', 'Stripe'].map((a, i) =>
+        `${i > 0 ? '<span class="pipeline-arrow">→</span>' : ''}<span class="agent-chip ${active.has(a) ? 'active' : 'blocked'}">${a}</span>`
+      ).join('');
+      if (rationaleEl) rationaleEl.textContent = h.routingRationale || '';
+      card.classList.remove('hidden');
+      card.setAttribute('aria-hidden', 'false');
+    }
+
+    function showReceiptCard(payment, beamId) {
+      const card = document.getElementById('stripe-receipt');
+      const rowsEl = document.getElementById('receipt-rows');
+      if (!card || !rowsEl || !payment || payment.status !== 'succeeded') return;
+      const amt = ((payment.amount ?? 299) / 100).toFixed(2);
+      rowsEl.innerHTML = `
+        <div class="receipt-row"><span>Status</span><span class="receipt-ok">✓ ${payment.status}</span></div>
+        <div class="receipt-row"><span>Amount</span><span>$${amt}</span></div>
+        <div class="receipt-row"><span>Project</span><span>${beamId}</span></div>
+        <div class="receipt-row"><span>Mode</span><span class="tag">${payment.mock ? 'mock' : 'test'}</span></div>
+        ${payment.id ? `<div class="receipt-id">${payment.id}</div>` : ''}`;
+      card.classList.remove('hidden');
+      card.setAttribute('aria-hidden', 'false');
     }
 
     function buildDebugPanel(data) {
@@ -308,10 +408,20 @@
           <div class="debug-code">${data.mmrRoot}</div>
         </div>`;
       }
+      if (data.hermes) {
+        const h = data.hermes;
+        html += `<div class="debug-section">
+          <div class="debug-title">🧠 Hermes Orchestration</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${h.mock ? 'mock' : 'NIM · Hermes-3'}</span></div>
+          <div class="debug-row"><span>Pipeline</span><span>${(h.agents || []).join(' → ')}</span></div>
+          <div class="debug-row"><span>Confidence</span><span>${h.confidence ? Math.round(h.confidence * 100) + '%' : '—'}</span></div>
+          <div class="debug-row"><span>Domain</span><span>${h.domain || '—'}</span></div>
+        </div>`;
+      }
       if (data.decision) {
         const d = data.decision;
         html += `<div class="debug-section">
-          <div class="debug-title">🧠 Chromatic Council</div>
+          <div class="debug-title">🎨 Chromatic Council</div>
           <div class="debug-row"><span>Engine</span><span class="tag">${d.engine ?? 'mock'}</span></div>
           <div class="debug-row"><span>Rounds</span><span>${d.rounds}</span></div>
           <div class="debug-row"><span>φ-Harmony</span><span>${d.harmony}</span></div>
@@ -334,6 +444,48 @@
       content.innerHTML = html;
     }
 
+    // ── Compare All Scenarios ───────────────────────────────────────────────
+    document.getElementById('compare-btn')?.addEventListener('click', async () => {
+      if (isRunning) return;
+      isRunning = true;
+      const btn = document.getElementById('compare-btn');
+      const tableEl = document.getElementById('comparison-table');
+      btn.disabled = true;
+      btn.textContent = '⏳ Comparing…';
+      tableEl.innerHTML = '<div class="comp-loading">Running all 3 scenarios in parallel…</div>';
+      tableEl.classList.remove('hidden');
+
+      const scenarios = [...document.querySelectorAll('.scenario-card')].map(c => ({
+        scenario: c.dataset.scenario, beamId: c.dataset.beamId, domain: c.dataset.domain,
+        forceFailure: c.dataset.fail === 'true', label: c.dataset.label, query: c.dataset.query
+      }));
+
+      const results = await Promise.all(scenarios.map(async s => {
+        try {
+          const proof = await runQSSMDemo({ forceFailure: s.forceFailure, beamId: s.beamId, domain: s.domain });
+          const compliant = proof.publicInputs?.compliance === 'PASS';
+          const decision = await deliberateCouncil({ ...proof.publicInputs, beamId: s.beamId, domain: s.domain, label: s.label });
+          const councilProceed = decision.verdict.includes('proceed');
+          const pay = (compliant && councilProceed) ? await initiatePayment(decision.paymentAmount, s.beamId) : null;
+          return { label: s.label, compliant, harmony: decision.harmony, payment: pay?.status ?? 'BLOCKED' };
+        } catch (e) {
+          return { label: s.label, compliant: false, harmony: '—', payment: 'ERROR' };
+        }
+      }));
+
+      const pass = v => v ? '✅' : '❌';
+      tableEl.innerHTML = `<table class="comp-table">
+        <thead><tr><th>Scenario</th><th>QSSM</th><th>φ-Harmony</th><th>Payment</th></tr></thead>
+        <tbody>${results.map(r => `<tr class="comp-row${r.compliant ? '' : ' fail-row'}">
+          <td>${r.label}</td><td>${pass(r.compliant)}</td><td>${r.harmony}</td><td>${r.payment}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+
+      btn.disabled = false;
+      btn.textContent = '⚖️ Compare All Scenarios';
+      isRunning = false;
+    });
+
     // ── Main demo run ───────────────────────────────────────────────────────
     document.getElementById('run-demo').addEventListener('click', async () => {
       if (isRunning) return;
@@ -352,25 +504,22 @@
       const umberTextEl = document.getElementById('umber-text');
 
       // Reset UI
-      btn.disabled = true;
-      btn.textContent = '⏳ Running...';
+      btn.disabled = true; btn.textContent = '⏳ Running...';
       document.getElementById('status').innerHTML = '';
       proofCard.classList.remove('show', 'fail');
-      proofSeal.textContent = '🛡️';
-      proofStamp.textContent = 'VERIFIED';
-      proofStamp.style.cssText = '';
+      proofSeal.textContent = '🛡️'; proofStamp.textContent = 'VERIFIED'; proofStamp.style.cssText = '';
       document.getElementById('council-rationale').textContent = '';
       councilDeliberation.classList.add('hidden');
-      emberTextEl.textContent = '';
-      umberTextEl.textContent = '';
-      streamPreview.classList.add('hidden');
-      streamTextEl.textContent = '';
+      emberTextEl.textContent = ''; umberTextEl.textContent = '';
+      streamPreview.classList.add('hidden'); streamTextEl.textContent = '';
       document.getElementById('debug-content').innerHTML = '';
+      document.getElementById('compliance-panel')?.classList.add('hidden');
+      document.getElementById('hermes-card')?.classList.add('hidden');
+      document.getElementById('stripe-receipt')?.classList.add('hidden');
       resetSteps();
       addStatus(`🔄 Initializing Symbiosis Engine — ${activeScenario.label}…`);
       activateStep(1);
 
-      // SSE stream controller (cleaned up in finally)
       const streamController = new AbortController();
       const t0 = performance.now();
 
@@ -398,6 +547,7 @@
           proofStamp.style.borderColor = 'var(--accent)';
         }
         proofCard.classList.add('show');
+        showCompliancePanel(proof, activeScenario);
         activateStep(2);
 
         // ── Step 3: Moloch MMR ─────────────────────────────────────────────
@@ -407,21 +557,23 @@
         activateStep(3);
 
         // ── Step 4: SCUGS / 3D Beam ───────────────────────────────────────
+        const yieldKsi = activeScenario.forceFailure ? 28 : (activeScenario.domain === 'seismic' ? 50 : 40);
+        const requiredKsi = 36;
         if (beamAvailable && isBeamReady()) {
           setBeamColor(compliant);
         } else {
-          renderSCUGS(compliant
-            ? (activeScenario.domain === 'seismic' ? '#0088ff' : '#FF4500')
-            : '#FF0000');
+          renderSCUGS({ compliant, beamId: activeScenario.beamId, domain: activeScenario.domain, yieldKsi, requiredKsi });
         }
         addStatus(`✅ SCUGS Tier‑1 Render: ${compliant ? 'Active' : 'VIOLATION DETECTED'}`);
         activateStep(4);
 
         // ── Hermes orchestration ───────────────────────────────────────────
         const hermesResult = await orchestrateHermes(
-          `Assess beam ${activeScenario.beamId} for ${activeScenario.label}. ${activeScenario.query}`
+          `Assess beam ${activeScenario.beamId} for ${activeScenario.label}. ${activeScenario.query}`,
+          { compliance: proof.publicInputs?.compliance, domain: activeScenario.domain, beamId: activeScenario.beamId }
         );
         addStatus(`🧠 Hermes: ${hermesResult.orchestration}`);
+        showHermesCard(hermesResult);
 
         // ── NVIDIA SSE streaming — background, non-blocking ───────────────
         debugPanel.open = true;
@@ -430,10 +582,7 @@
         fetch('http://localhost:3001/council-stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: activeScenario.query,
-            compliance: proof.publicInputs?.compliance
-          }),
+          body: JSON.stringify({ query: activeScenario.query, compliance: proof.publicInputs?.compliance }),
           signal: streamController.signal
         }).then(async streamRes => {
           if (!streamRes.ok || !streamRes.body) return;
@@ -450,31 +599,23 @@
               if (!line.startsWith('data: ')) continue;
               const raw = line.slice(6).trim();
               if (raw === '[DONE]') return;
-              try {
-                const { token } = JSON.parse(raw);
-                if (token) { streamedText += token; streamTextEl.textContent = streamedText; }
-              } catch {}
+              try { const { token } = JSON.parse(raw); if (token) { streamedText += token; streamTextEl.textContent = streamedText; } } catch {}
             }
           }
-        }).catch(e => {
-          if (e.name !== 'AbortError') console.warn('Council SSE:', e.message);
-        });
+        }).catch(e => { if (e.name !== 'AbortError') console.warn('Council SSE:', e.message); });
 
         // ── Step 5: Chromatic Council (critical path) ─────────────────────
         const decision = await deliberateCouncil({
           ...proof.publicInputs,
-          beamId: activeScenario.beamId,
-          domain: activeScenario.domain,
-          label: activeScenario.label
+          beamId: activeScenario.beamId, domain: activeScenario.domain, label: activeScenario.label
         });
 
-        // Sequential deliberation animation: Ember → pause → Umber → pause → Amber
         councilDeliberation.classList.remove('hidden');
         await typewriteEl(emberTextEl, decision.emberRationale || 'Ember: Assessing beam parameters…', 8);
         await delay(900);
         await typewriteEl(umberTextEl, decision.umberRationale || 'Umber: Cross-checking risk factors…', 8);
         await delay(800);
-        animateCouncil(decision);  // color bar blend + Amber typewriter
+        animateCouncil(decision);
 
         const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
         addStatus(
@@ -498,6 +639,7 @@
           const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
           addStatus(`💳 Payment: ${payLabel}`);
           setMetric('m-stripe', payment.status);
+          showReceiptCard(payment, activeScenario.beamId);
         } else {
           addStatus(`🚫 Payment blocked — compliance violation on ${activeScenario.beamId}`, 'error');
           setMetric('m-stripe', 'BLOCKED');
@@ -516,7 +658,7 @@
 
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
         addStatus(`✨ <strong>Demo complete in ${elapsed}s — ${activeScenario.label}</strong>`);
-        buildDebugPanel({ proof, mmrRoot, mmrEngine, decision, payment });
+        buildDebugPanel({ proof, mmrRoot, mmrEngine, hermes: hermesResult, decision, payment });
 
         if (payment?.status === 'succeeded' && compliant) {
           if (navigator.vibrate) navigator.vibrate([10, 40, 20]);

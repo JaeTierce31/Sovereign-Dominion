@@ -620,6 +620,223 @@ button.chromatic:disabled {
   box-shadow: 0 0 18px rgba(255, 69, 0, 0.35);
 }
 
+/* ===== System status bar ===== */
+.system-status {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.sys-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  opacity: 0.65;
+  transition: opacity 0.4s, border-color 0.4s;
+}
+.sys-chip.online { opacity: 1; border-color: rgba(34, 197, 94, 0.3); }
+.sys-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #444;
+  flex-shrink: 0;
+  transition: background 0.4s;
+}
+
+/* ===== IBC Compliance panel ===== */
+.compliance-panel {
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease both;
+}
+.compliance-title {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+.ibc-rule {
+  display: grid;
+  grid-template-columns: 1.2rem 1fr auto auto;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.ibc-rule:last-child { border-bottom: none; }
+.ibc-check { text-align: center; }
+.ibc-rule.pass .ibc-check { color: var(--ok); }
+.ibc-rule.fail .ibc-check { color: #ff6b6b; }
+.ibc-label { opacity: 0.7; }
+.ibc-val { font-weight: 600; text-align: right; }
+.ibc-rule.pass .ibc-val { color: var(--ok); }
+.ibc-rule.fail .ibc-val { color: #ff6b6b; }
+.ibc-req { opacity: 0.4; text-align: right; }
+
+/* ===== Hermes routing card ===== */
+.hermes-card {
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  background: rgba(0, 170, 255, 0.04);
+  border: 1px solid rgba(0, 170, 255, 0.2);
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease both;
+}
+.hermes-header {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #00aaff;
+  margin-bottom: 0.5rem;
+}
+.hermes-pipeline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 0.4rem;
+}
+.agent-chip {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.agent-chip.active {
+  color: #00aaff;
+  border-color: #00aaff;
+  background: rgba(0, 170, 255, 0.1);
+}
+.agent-chip.blocked {
+  color: #444;
+  border-color: #333;
+  background: transparent;
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+.pipeline-arrow {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  opacity: 0.35;
+  margin: 0 1px;
+}
+.hermes-rationale {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  line-height: 1.55;
+  opacity: 0.7;
+  border-left: 2px solid rgba(0, 170, 255, 0.22);
+  padding-left: 8px;
+  margin-top: 4px;
+}
+
+/* ===== Stripe receipt card ===== */
+.stripe-receipt {
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  background: rgba(99, 91, 255, 0.05);
+  border: 1px solid rgba(99, 91, 255, 0.25);
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease both;
+}
+.receipt-header {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #635bff;
+  margin-bottom: 0.5rem;
+}
+.receipt-rows { display: flex; flex-direction: column; gap: 4px; }
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  opacity: 0.88;
+}
+.receipt-row span:first-child { opacity: 0.55; }
+.receipt-ok { color: var(--ok); font-weight: 600; }
+.receipt-id {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: #635bff;
+  opacity: 0.7;
+  word-break: break-all;
+  margin-top: 6px;
+  padding: 3px 6px;
+  background: rgba(99, 91, 255, 0.08);
+  border-radius: 4px;
+}
+
+/* ===== Compare scenarios ===== */
+.compare-btn {
+  margin-top: 0.8rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 10px 16px;
+  font-size: 0.88rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  color: var(--text);
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s, background 0.2s;
+}
+.compare-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.compare-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.comparison-table {
+  margin-top: 0.6rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: fadeIn 0.3s ease both;
+}
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+.comp-table th {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.comp-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.comp-row.fail-row { background: rgba(255, 69, 0, 0.06); }
+.comp-loading {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 1rem;
+  opacity: 0.6;
+  text-align: center;
+}
+
 /* ===== Small screens ===== */
 @media (max-width: 360px) {
   header h1 { font-size: 1.6rem; }
