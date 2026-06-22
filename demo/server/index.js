@@ -32,14 +32,21 @@ async function nimChat(apiKey, model, systemPrompt, userContent, maxTokens = 128
 // Chromatic Council — Ember + Umber deliberation via Nemotron, Amber synthesis
 app.post('/council', async (req, res) => {
   const apiKey = process.env.NVIDIA_API_KEY;
+  const isFail = req.body.compliance === 'FAIL';
   if (!apiKey) {
     return res.json({
-      ember: 'Beam design exceeds IBC 1604 with structural margin. Innovation path is clear.',
-      umber: 'Deflection analysis shows acceptable limits. Risk factors are controlled.',
-      amber: 'Amber synthesis — proceed with compliance seal. Harmony achieved.',
-      color: '#22c55e',
-      verdict: 'proceed',
-      harmony: '0.92',
+      ember: isFail
+        ? 'Beam critically fails IBC 1604 minimum yield at 28 ksi — 22% below threshold. Structural redesign is mandatory before proceeding.'
+        : 'Beam design exceeds IBC 1604 with structural margin. Innovation path is clear.',
+      umber: isFail
+        ? 'Risk analysis confirms critical structural deficiency. Deflection under design load exceeds code limits by an unacceptable margin. Project must halt.'
+        : 'Deflection analysis shows acceptable limits. Risk factors are controlled.',
+      amber: isFail
+        ? 'Amber synthesis — halt. Non-compliant beam requires immediate human engineering review. No seal can be issued.'
+        : 'Amber synthesis — proceed with compliance seal. Harmony achieved.',
+      color: isFail ? '#c0392b' : '#22c55e',
+      verdict: isFail ? 'caution' : 'proceed',
+      harmony: isFail ? '0.12' : '0.92',
       mock: true
     });
   }
@@ -65,8 +72,10 @@ app.post('/council', async (req, res) => {
     const ember = emberText || 'Beam exceeds IBC specifications with margin.';
     const umber = umberText || 'Risk factors identified and controlled.';
     const amber = `Amber synthesis: ${ember.split('.')[0]}. ${umber.split('.')[0]}.`;
+    const verdict = isFail ? 'caution' : 'proceed';
+    const color = isFail ? '#c0392b' : '#22c55e';
 
-    res.json({ ember, umber, amber, color: '#22c55e', verdict: 'proceed', harmony: '0.92', mock: false });
+    res.json({ ember, umber, amber, color, verdict, harmony: '0.92', mock: false });
   } catch (e) {
     res.json({
       ember: 'Beam design meets all structural requirements with safety margin.',
@@ -74,6 +83,85 @@ app.post('/council', async (req, res) => {
       amber: 'Amber synthesis — proceed with compliance seal.',
       color: '#22c55e', verdict: 'proceed', harmony: '0.92', mock: true
     });
+  }
+});
+
+// Council SSE streaming — streams Nemotron tokens in real-time to the frontend debug panel
+app.post('/council-stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const apiKey = process.env.NVIDIA_API_KEY;
+  const compliance = String(req.body.compliance || 'PASS');
+  const query = String(req.body.query || 'Assess structural beam compliance.').slice(0, 512);
+  const isFail = compliance === 'FAIL';
+
+  if (!apiKey) {
+    const mockContent = isFail
+      ? 'Ember: Beam critically fails IBC 1604 — yield 28 ksi is 22% below 36 ksi threshold. Redesign mandatory. | Umber: Critical structural deficiency confirmed. Deflection exceeds code limits by unacceptable margin. Halt. | Amber: Non-compliant beam — council unanimous. No seal possible. Human engineering review required immediately.'
+      : 'Ember: Beam design exceeds IBC 1604 with 11% structural margin. Innovation pathway is sound and clear. | Umber: Deflection under service load within acceptable bounds. Risk factors controlled with built-in redundancy. | Amber: Synthesized council decision — proceed with compliance seal. φ-harmony 0.92 achieved.';
+    const tokens = mockContent.split(/(\s+)/);
+    for (const token of tokens) {
+      if (!token) continue;
+      res.write(`data: ${JSON.stringify({ token })}\n\n`);
+      if (!/^\s+$/.test(token)) await new Promise(r => setTimeout(r, 45));
+    }
+    res.write('data: [DONE]\n\n');
+    return res.end();
+  }
+
+  try {
+    const systemPrompt = isFail
+      ? 'You are the Chromatic Council of Sovereign Dominion. This beam FAILS structural compliance. In exactly 3 sentences labeled Ember, Umber, and Amber: describe the specific failure, confirm the risk analysis, and synthesize a unanimous halt recommendation.'
+      : 'You are the Chromatic Council of Sovereign Dominion. In exactly 3 sentences labeled Ember, Umber, and Amber: provide an optimistic structural assessment, a careful risk analysis, and a synthesized proceed recommendation.';
+
+    const nimRes = await fetch(NIM_BASE, {
+      method: 'POST',
+      headers: nimHeaders(apiKey),
+      body: JSON.stringify({
+        model: 'nvidia/nemotron-4-340b-instruct',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: query }
+        ],
+        max_tokens: 256,
+        temperature: 0.5,
+        stream: true
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+
+    if (!nimRes.ok) throw new Error(`NIM ${nimRes.status}`);
+
+    const reader = nimRes.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') { res.write('data: [DONE]\n\n'); return res.end(); }
+        try {
+          const parsed = JSON.parse(raw);
+          const token = parsed.choices?.[0]?.delta?.content;
+          if (token) res.write(`data: ${JSON.stringify({ token })}\n\n`);
+        } catch {}
+      }
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (e) {
+    res.write(`data: ${JSON.stringify({ token: ' [stream error — using deliberation fallback]' })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
   }
 });
 

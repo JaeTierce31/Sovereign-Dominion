@@ -25,10 +25,7 @@ function typewrite(el, text, speed = 18) {
   let i = 0;
   const tick = () => {
     el.textContent = text.slice(0, i);
-    if (i < text.length) {
-      i++;
-      setTimeout(tick, speed);
-    }
+    if (i < text.length) { i++; setTimeout(tick, speed); }
   };
   tick();
 }
@@ -41,12 +38,11 @@ function synthesize(emberVote, umberVote, emberWeight, umberWeight) {
   const normalizedHue = (amberHue + 360) % 360;
   const confidence = Math.sqrt(emberVote.confidence * umberVote.confidence);
   const urgency = Math.max(emberVote.urgency, umberVote.urgency);
-  const hsl = `hsl(${normalizedHue.toFixed(0)}, ${(confidence * 100).toFixed(0)}%, ${(urgency * 50 + 25).toFixed(0)}%)`;
   return {
     hue: normalizedHue,
     confidence,
     urgency,
-    color: hsl,
+    color: `hsl(${normalizedHue.toFixed(0)}, ${(confidence * 100).toFixed(0)}%, ${(urgency * 50 + 25).toFixed(0)}%)`,
     harmony: (1 - Math.abs(emberVote.hue - umberVote.hue) / 360),
     rationale: `Synthesised at φ‑harmony ${((1 - Math.abs(emberVote.hue - umberVote.hue) / 360) * 100).toFixed(0)}%.`
   };
@@ -65,73 +61,95 @@ function preMortemChallenge(emberRationale, umberRationale, domain) {
 }
 
 function localDeliberate(payload, deepMode, preMortem) {
+  const isFail = payload?.compliance === 'FAIL';
+  const beamLabel = payload?.beamId || 'B-001';
+
   const emberVote = {
-    agent: 'Ember', hue: 0, confidence: 0.92, urgency: 0.6,
-    rationale: 'Beam design exceeds IBC 1604 with margin.'
+    agent: 'Ember',
+    hue: isFail ? 15 : 0,
+    confidence: isFail ? 0.42 : 0.92,
+    urgency: isFail ? 0.92 : 0.6,
+    rationale: isFail
+      ? `Beam ${beamLabel} critically fails IBC 1604 minimum yield at 28 ksi — 22% below the 36 ksi threshold. Structural redesign is mandatory.`
+      : 'Beam design exceeds IBC 1604 with margin.'
   };
   const umberVote = {
-    agent: 'Umber', hue: 240, confidence: 0.88, urgency: 0.7,
-    rationale: 'Deflection analysis shows acceptable limits. Risk is controlled.'
+    agent: 'Umber',
+    hue: isFail ? 0 : 240,
+    confidence: isFail ? 0.38 : 0.88,
+    urgency: isFail ? 0.96 : 0.7,
+    rationale: isFail
+      ? `Risk analysis confirms critical structural deficiency on ${beamLabel}. Deflection under design load exceeds code limits. Project must halt immediately.`
+      : 'Deflection analysis shows acceptable limits. Risk is controlled.'
   };
 
   const round1 = synthesize(emberVote, umberVote, 0.8, 0.6);
-  const harmony1 = round1.harmony;
 
   let preMortemResult = null;
   if (preMortem) {
     preMortemResult = preMortemChallenge(emberVote.rationale, umberVote.rationale, payload?.domain || 'structural');
-    umberVote.confidence = Math.max(0.7, umberVote.confidence - 0.1);
-    umberVote.rationale += ` However, Pre‑Mortem challenge: "${preMortemResult.challenge}" warrants checks.`;
+    umberVote.confidence = Math.max(isFail ? 0.3 : 0.7, umberVote.confidence - 0.1);
+    umberVote.rationale += ` Pre‑Mortem: "${preMortemResult.challenge}"`;
   }
 
   let finalSynthesis = round1;
   let deliberationRounds = 1;
 
-  if (deepMode && (harmony1 < 0.9 || preMortem)) {
+  if (deepMode && (round1.harmony < 0.9 || preMortem)) {
     const emberRevised = {
       ...emberVote,
-      confidence: Math.min(1.0, emberVote.confidence + 0.03),
-      rationale: emberVote.rationale + ' Addressed pre‑mortem with additional load testing.'
+      confidence: Math.min(isFail ? 0.45 : 1.0, emberVote.confidence + 0.03),
+      rationale: emberVote.rationale + (isFail
+        ? ' No compliance path without material substitution.'
+        : ' Addressed pre‑mortem with additional load testing.')
     };
     const umberRevised = {
       ...umberVote,
-      confidence: Math.min(1.0, umberVote.confidence + 0.05),
-      rationale: umberVote.rationale + ' Confirmatory checks satisfied.'
+      confidence: Math.min(isFail ? 0.4 : 1.0, umberVote.confidence + 0.05),
+      rationale: umberVote.rationale + (isFail
+        ? ' Confirmatory analysis confirms non-compliance.'
+        : ' Confirmatory checks satisfied.')
     };
     finalSynthesis = synthesize(emberRevised, umberRevised, 0.85, 0.65);
     deliberationRounds = 2;
   }
 
-  const verdict = finalSynthesis.confidence > 0.8
-    ? 'Amber Synthesis — proceed with seal'
-    : 'Amber Synthesis — caution, human review advised';
+  const color = isFail ? 'hsl(0, 82%, 42%)' : finalSynthesis.color;
+  const harmony = isFail ? '0.12' : finalSynthesis.harmony.toFixed(3);
+  const amberRationale = isFail
+    ? `Amber Synthesis: Non-compliant beam ${beamLabel} — council vote is unanimous. Halt all progression. Human engineering review required before any seal can be issued.`
+    : finalSynthesis.rationale;
+  const verdict = isFail
+    ? 'Amber Synthesis — halt, human review required'
+    : (finalSynthesis.confidence > 0.8
+      ? 'Amber Synthesis — proceed with seal'
+      : 'Amber Synthesis — caution, human review advised');
 
   return {
     verdict,
     paymentAmount: 299,
-    reasoning: finalSynthesis.rationale,
-    color: finalSynthesis.color,
-    harmony: finalSynthesis.harmony.toFixed(3),
+    reasoning: amberRationale,
+    color,
+    harmony,
     rounds: deliberationRounds,
     preMortem: preMortemResult?.challenge || null,
     preMortemCheck: preMortemResult?.recommendedCheck || null,
     emberRationale: emberVote.rationale,
     umberRationale: umberVote.rationale,
-    amberRationale: finalSynthesis.rationale,
+    amberRationale,
     engine: 'mock'
   };
 }
 
 export async function deliberateCouncil(payload, deepMode = true, preMortem = true) {
-  // Try real NVIDIA deliberation via backend
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
-    const query = `Assess structural beam compliance for domain: ${payload?.domain || 'structural'}, beam: ${payload?.beamId || 'B-001'}. Compliance status: ${payload?.compliance || 'PASS'}.`;
+    const query = `Assess structural beam compliance for domain: ${payload?.domain || 'structural'}, beam: ${payload?.beamId || 'B-001'}. Compliance status: ${payload?.compliance || 'PASS'}.${payload?.label ? ` Project: ${payload.label}.` : ''}`;
     const res = await fetch('http://localhost:3001/council', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, compliance: payload?.compliance || 'PASS' }),
       signal: controller.signal
     });
     clearTimeout(timeout);
