@@ -600,6 +600,8 @@ button.chromatic:disabled {
   color: var(--text);
   opacity: 0.82;
   min-height: 2.5rem;
+  max-height: 180px;
+  overflow-y: auto;
   word-break: break-word;
 }
 @keyframes cursorBlink {

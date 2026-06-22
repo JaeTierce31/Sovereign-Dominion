@@ -19,6 +19,7 @@ export async function initiatePayment(amount, projectId) {
       return { status: data.status || 'succeeded', amount: data.amount ?? amount, id: data.id, mock: false };
     }
   } catch (e) {
+    clearTimeout(timeout);
     console.warn('⚠️ Backend not available, using mock payment:', e.message);
   }
 

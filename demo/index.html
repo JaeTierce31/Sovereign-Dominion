@@ -243,7 +243,7 @@
       }
     }
 
-    // ── System status check ─────────────────────────────────────────────────
+    // ── System status check (2 attempts, 3s apart for cold-start backends) ──
     (async function fetchSystemStatus() {
       const setChip = (id, ok) => {
         const el = document.getElementById(id);
@@ -253,14 +253,20 @@
         el.classList.toggle('online', ok);
       };
       setChip('sys-wasm', typeof WebAssembly !== 'undefined');
-      try {
-        const res = await fetch('http://localhost:3001/health', { signal: AbortSignal.timeout(2000) });
-        if (res.ok) {
-          const { nvidia, stripe } = await res.json();
-          setChip('sys-nvidia', !!nvidia);
-          setChip('sys-stripe', !!stripe);
-        } else { setChip('sys-nvidia', false); setChip('sys-stripe', false); }
-      } catch { setChip('sys-nvidia', false); setChip('sys-stripe', false); }
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch('http://localhost:3001/health', { signal: AbortSignal.timeout(2000) });
+          if (res.ok) {
+            const { nvidia, stripe } = await res.json();
+            setChip('sys-nvidia', !!nvidia);
+            setChip('sys-stripe', !!stripe);
+            return;
+          }
+        } catch {}
+        if (attempt === 0) await new Promise(r => setTimeout(r, 3000));
+      }
+      setChip('sys-nvidia', false);
+      setChip('sys-stripe', false);
     })();
 
     // ── Splash dismiss ──────────────────────────────────────────────────────
@@ -582,19 +588,25 @@
       }));
 
       const results = await Promise.all(scenarios.map(async s => {
-        try {
-          const proof = await runQSSMDemo({ forceFailure: s.forceFailure, beamId: s.beamId, domain: s.domain });
-          const compliant = proof.publicInputs?.compliance === 'PASS';
-          const decision = await deliberateCouncil({ ...proof.publicInputs, beamId: s.beamId, domain: s.domain, label: s.label });
-          const councilProceed = decision.verdict.includes('proceed');
-          const pay = (compliant && councilProceed) ? await initiatePayment(decision.paymentAmount, s.beamId) : null;
-          return { label: s.label, compliant, harmony: decision.harmony, payment: pay?.status ?? 'BLOCKED' };
-        } catch (e) {
-          return { label: s.label, compliant: false, harmony: '—', payment: 'ERROR' };
-        }
+        const run = (async () => {
+          try {
+            const proof = await runQSSMDemo({ forceFailure: s.forceFailure, beamId: s.beamId, domain: s.domain });
+            const compliant = proof.publicInputs?.compliance === 'PASS';
+            const decision = await deliberateCouncil({ ...proof.publicInputs, beamId: s.beamId, domain: s.domain, label: s.label });
+            const councilProceed = decision.verdict.includes('proceed');
+            const pay = (compliant && councilProceed) ? await initiatePayment(decision.paymentAmount, s.beamId) : null;
+            return { label: s.label, compliant, harmony: decision.harmony, payment: pay?.status ?? 'BLOCKED' };
+          } catch (e) {
+            return { label: s.label, compliant: false, harmony: '—', payment: 'ERROR' };
+          }
+        })();
+        const timeout = new Promise(resolve =>
+          setTimeout(() => resolve({ label: s.label, compliant: null, harmony: '—', payment: 'TIMEOUT' }), 25000)
+        );
+        return Promise.race([run, timeout]);
       }));
 
-      const pass = v => v ? '✅' : '❌';
+      const pass = v => v === true ? '✅' : v === false ? '❌' : '⏱';
       tableEl.innerHTML = `<table class="comp-table">
         <thead><tr><th>Scenario</th><th>QSSM</th><th>φ-Harmony</th><th>Payment</th></tr></thead>
         <tbody>${results.map(r => `<tr class="comp-row${r.compliant ? '' : ' fail-row'}">

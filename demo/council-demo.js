@@ -38,13 +38,17 @@ function synthesize(emberVote, umberVote, emberWeight, umberWeight) {
   const normalizedHue = (amberHue + 360) % 360;
   const confidence = Math.sqrt(emberVote.confidence * umberVote.confidence);
   const urgency = Math.max(emberVote.urgency, umberVote.urgency);
+  // Circular hue distance: max separation is 180°, divide to normalize [0,1]
+  const _d = Math.abs(emberVote.hue - umberVote.hue);
+  const hueDist = Math.min(_d, 360 - _d);
+  const harmony = 1 - hueDist / 180;
   return {
     hue: normalizedHue,
     confidence,
     urgency,
     color: `hsl(${normalizedHue.toFixed(0)}, ${(confidence * 100).toFixed(0)}%, ${(urgency * 50 + 25).toFixed(0)}%)`,
-    harmony: (1 - Math.abs(emberVote.hue - umberVote.hue) / 360),
-    rationale: `Synthesised at φ‑harmony ${((1 - Math.abs(emberVote.hue - umberVote.hue) / 360) * 100).toFixed(0)}%.`
+    harmony,
+    rationale: `Synthesised at φ‑harmony ${(harmony * 100).toFixed(0)}%.`
   };
 }
 
@@ -66,21 +70,23 @@ function localDeliberate(payload, deepMode, preMortem) {
 
   const emberVote = {
     agent: 'Ember',
-    hue: isFail ? 15 : 0,
+    // PASS: warm amber (38°) — optimistic, innovative; FAIL: red-orange (15°) — alarmed
+    hue: isFail ? 15 : 38,
     confidence: isFail ? 0.42 : 0.92,
     urgency: isFail ? 0.92 : 0.6,
     rationale: isFail
       ? `Beam ${beamLabel} critically fails IBC 1604 minimum yield at 28 ksi — 22% below the 36 ksi threshold. Structural redesign is mandatory.`
-      : 'Beam design exceeds IBC 1604 with margin.'
+      : `Beam ${beamLabel} exceeds IBC 1604 yield threshold with structural margin. Innovation pathway confirmed viable.`
   };
   const umberVote = {
     agent: 'Umber',
-    hue: isFail ? 0 : 240,
+    // PASS: cool gold (62°) — cautiously optimistic; FAIL: pure red (0°) — unanimous alarm
+    hue: isFail ? 0 : 62,
     confidence: isFail ? 0.38 : 0.88,
     urgency: isFail ? 0.96 : 0.7,
     rationale: isFail
       ? `Risk analysis confirms critical structural deficiency on ${beamLabel}. Deflection under design load exceeds code limits. Project must halt immediately.`
-      : 'Deflection analysis shows acceptable limits. Risk is controlled.'
+      : `Deflection analysis within acceptable bounds. Risk factors are controlled with built-in redundancy margins.`
   };
 
   const round1 = synthesize(emberVote, umberVote, 0.8, 0.6);
