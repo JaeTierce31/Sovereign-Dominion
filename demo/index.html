@@ -144,6 +144,15 @@
             </div>
           </div>
           <div id="council-bar"></div>
+          <!-- φ-Harmony confidence gauge -->
+          <div id="harmony-gauge" class="harmony-gauge hidden" aria-hidden="true">
+            <svg viewBox="0 0 100 100" class="gauge-svg" role="img" aria-label="φ-Harmony score gauge">
+              <circle class="gauge-track" cx="50" cy="50" r="38"/>
+              <circle class="gauge-arc" id="gauge-arc" cx="50" cy="50" r="38"/>
+              <text class="gauge-label" id="gauge-label" x="50" y="47">—</text>
+              <text class="gauge-sub" x="50" y="63">φ-HARMONY</text>
+            </svg>
+          </div>
           <p id="council-rationale" class="council-rationale"></p>
         </section>
 
@@ -158,6 +167,13 @@
         <div id="stripe-receipt" class="stripe-receipt hidden" aria-hidden="true">
           <div class="receipt-header">💳 Payment Receipt</div>
           <div id="receipt-rows" class="receipt-rows"></div>
+        </div>
+
+        <!-- Certificate download (shown after run completes) -->
+        <div class="cert-btn-wrap">
+          <button id="cert-btn" class="cert-btn hidden" aria-label="Download compliance certificate as PNG">
+            📄 Download Certificate
+          </button>
         </div>
 
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
@@ -201,6 +217,7 @@
     import { initiatePayment } from './stripe.js';
     import { launchConfetti } from './confetti.js';
     import { initBeam, setBeamColor, isBeamReady } from './three-beam.js';
+    import { downloadCertificate } from './certificate.js';
 
     let isRunning = false;
     let beamAvailable = false;
@@ -390,6 +407,24 @@
         ${payment.id ? `<div class="receipt-id">${payment.id}</div>` : ''}`;
       card.classList.remove('hidden');
       card.setAttribute('aria-hidden', 'false');
+    }
+
+    function animateGauge(harmony, color) {
+      const gaugeEl = document.getElementById('harmony-gauge');
+      const arcEl   = document.getElementById('gauge-arc');
+      const labelEl = document.getElementById('gauge-label');
+      if (!gaugeEl || !arcEl || !labelEl) return;
+      const r = 38, circ = 2 * Math.PI * r;
+      const score = Math.min(1, Math.max(0, parseFloat(harmony) || 0));
+      arcEl.style.stroke = color || 'var(--accent)';
+      arcEl.style.strokeDasharray = circ;
+      arcEl.style.strokeDashoffset = circ; // start empty
+      labelEl.textContent = harmony || '—';
+      gaugeEl.classList.remove('hidden');
+      gaugeEl.removeAttribute('aria-hidden');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        arcEl.style.strokeDashoffset = circ * (1 - score);
+      }));
     }
 
     function buildDebugPanel(data) {
@@ -602,6 +637,13 @@
       document.getElementById('compliance-panel')?.classList.add('hidden');
       document.getElementById('hermes-card')?.classList.add('hidden');
       document.getElementById('stripe-receipt')?.classList.add('hidden');
+      document.getElementById('cert-btn')?.classList.add('hidden');
+      const _gaugeEl = document.getElementById('harmony-gauge');
+      if (_gaugeEl) { _gaugeEl.classList.add('hidden'); _gaugeEl.setAttribute('aria-hidden', 'true'); }
+      const _gaugeArc = document.getElementById('gauge-arc');
+      if (_gaugeArc) _gaugeArc.style.strokeDashoffset = String(2 * Math.PI * 38);
+      const _gaugeLbl = document.getElementById('gauge-label');
+      if (_gaugeLbl) _gaugeLbl.textContent = '—';
       resetSteps();
       addStatus(`🔄 Initializing Symbiosis Engine — ${activeScenario.label}…`);
       activateStep(1);
@@ -643,7 +685,8 @@
         activateStep(3);
 
         // ── Step 4: SCUGS / 3D Beam ───────────────────────────────────────
-        const yieldKsi = activeScenario.forceFailure ? 28 : (activeScenario.domain === 'seismic' ? 50 : 40);
+        const yieldKsi    = activeScenario.forceFailure ? 28 : (activeScenario.domain === 'seismic' ? 50 : 40);
+        const modMsi      = activeScenario.forceFailure ? 20 : 29;
         const requiredKsi = 36;
         if (beamAvailable && isBeamReady()) {
           setBeamColor(compliant);
@@ -715,6 +758,7 @@
         await typewriteEl(umberTextEl, decision.umberRationale || 'Umber: Cross-checking risk factors…', 8);
         await delay(800);
         animateCouncil(decision);
+        animateGauge(decision.harmony, decision.color);
 
         const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
         addStatus(
@@ -757,6 +801,33 @@
 
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
         addStatus(`✨ <strong>Demo complete in ${elapsed}s — ${activeScenario.label}</strong>`);
+
+        // ── Certificate download button ────────────────────────────────────
+        const proofHex = Array.from((proof.proof || new Uint8Array(16)).slice(0, 16))
+          .map(x => x.toString(16).padStart(2, '0')).join('');
+        const certData = {
+          scenario: activeScenario.label,
+          beamId: activeScenario.beamId,
+          domain: activeScenario.domain,
+          compliance: proof.publicInputs?.compliance,
+          proofHex,
+          benchmarkMs: proof.benchmarkMs,
+          mmrRoot,
+          yieldKsi,
+          modMsi,
+          requiredKsi,
+          harmony: decision.harmony,
+          color: decision.color,
+          verdict: decision.verdict,
+          paymentId: payment?.id,
+          timestamp: Date.now()
+        };
+        const certBtn = document.getElementById('cert-btn');
+        if (certBtn) {
+          certBtn.classList.remove('hidden');
+          certBtn.onclick = () => downloadCertificate(certData);
+        }
+
         buildDebugPanel({ proof, mmrRoot, mmrEngine, hermes: hermesResult, decision, payment });
 
         if (payment?.status === 'succeeded' && compliant) {
