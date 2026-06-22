@@ -32,6 +32,22 @@
       <h1>🦅 SOVEREIGN DOMINION</h1>
       <p class="tagline">Your word, built. Governed by the laws of mathematics.</p>
     </header>
+
+    <!-- Sponsor attribution bar -->
+    <div class="sponsor-bar">
+      <span class="sponsor-badge nvidia" title="Nemotron-4 Council + Hermes-3 Orchestration">⚡ NVIDIA NIM</span>
+      <span class="sponsor-badge stripe" title="Stripe PaymentIntents API">💳 Stripe</span>
+      <span class="sponsor-badge nous" title="Hermes-3-405B Orchestrator">🧠 Nous Research</span>
+    </div>
+
+    <!-- Live metrics strip -->
+    <div class="metrics-bar">
+      <div class="metric-cell"><div class="metric-label">QSSM</div><div class="metric-value" id="m-qssm">—</div></div>
+      <div class="metric-cell"><div class="metric-label">MMR</div><div class="metric-value" id="m-mmr">—</div></div>
+      <div class="metric-cell"><div class="metric-label">φ-Harmony</div><div class="metric-value" id="m-harmony">—</div></div>
+      <div class="metric-cell"><div class="metric-label">Stripe</div><div class="metric-value" id="m-stripe">—</div></div>
+    </div>
+
     <main>
       <section id="demo-flow">
         <div id="steps" aria-hidden="true">
@@ -66,6 +82,12 @@
         </section>
 
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
+
+        <!-- Technical Deep Dive — populated after each run -->
+        <details id="debug-panel" class="debug-panel">
+          <summary>🔬 Technical Deep Dive</summary>
+          <div id="debug-content" class="debug-content"></div>
+        </details>
       </section>
 
       <div id="council-overlay" class="hidden"></div>
@@ -136,6 +158,66 @@
       line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    function setMetric(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value;
+      el.classList.remove('metric-live');
+      void el.offsetWidth;
+      el.classList.add('metric-live');
+    }
+
+    function buildDebugPanel(data) {
+      const content = document.getElementById('debug-content');
+      if (!content) return;
+      const fmtBytes = b => b instanceof Uint8Array
+        ? '0x' + Array.from(b.slice(0, 16)).map(x => x.toString(16).padStart(2, '0')).join('') + '…'
+        : String(b);
+      let html = '';
+      if (data.proof) {
+        html += `<div class="debug-section">
+          <div class="debug-title">🔐 QSSM v1.1 Proof</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${data.proof.engine}</span></div>
+          <div class="debug-row"><span>Prove time</span><span>${data.proof.benchmarkMs} ms</span></div>
+          <div class="debug-row"><span>Proof size</span><span>${data.proof.proof?.length ?? 0} bytes</span></div>
+          <div class="debug-row"><span>Beam ID</span><span>${data.proof.publicInputs?.beamId ?? '—'}</span></div>
+          <div class="debug-row"><span>Compliance</span><span>${data.proof.publicInputs?.compliance ?? '—'}</span></div>
+          <div class="debug-code">${fmtBytes(data.proof.proof)}</div>
+        </div>`;
+      }
+      if (data.mmrRoot) {
+        html += `<div class="debug-section">
+          <div class="debug-title">🌲 Moloch MMR</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${data.mmrEngine ?? 'mock'}</span></div>
+          <div class="debug-code">${data.mmrRoot}</div>
+        </div>`;
+      }
+      if (data.decision) {
+        const d = data.decision;
+        html += `<div class="debug-section">
+          <div class="debug-title">🧠 Chromatic Council</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${d.engine ?? 'mock'}</span></div>
+          <div class="debug-row"><span>Rounds</span><span>${d.rounds}</span></div>
+          <div class="debug-row"><span>φ-Harmony</span><span>${d.harmony}</span></div>
+          <div class="debug-row"><span>Color</span><span><span class="swatch" style="background:${d.color}"></span> ${d.color}</span></div>
+          <div class="debug-label">Ember</div><div class="debug-quote">${d.emberRationale ?? '—'}</div>
+          <div class="debug-label">Umber</div><div class="debug-quote">${d.umberRationale ?? '—'}</div>
+          <div class="debug-label">Amber Synthesis</div><div class="debug-quote">${d.amberRationale ?? '—'}</div>
+        </div>`;
+      }
+      if (data.payment) {
+        const p = data.payment;
+        html += `<div class="debug-section">
+          <div class="debug-title">💳 Stripe PaymentIntent</div>
+          <div class="debug-row"><span>Status</span><span>${p.status}</span></div>
+          <div class="debug-row"><span>Mode</span><span class="tag">${p.mock ? 'mock' : 'test'}</span></div>
+          <div class="debug-row"><span>Amount</span><span>$${((p.amount ?? 299) / 100).toFixed(2)}</span></div>
+          ${p.id ? `<div class="debug-code">${p.id}</div>` : ''}
+        </div>`;
+      }
+      content.innerHTML = html;
+    }
+
     document.getElementById('run-demo').addEventListener('click', async () => {
       if (isRunning) return;
       isRunning = true;
@@ -160,14 +242,16 @@
         const proof = await runQSSMDemo();
         const engineLabel = proof.engine === 'wasm' ? 'WASM' : 'mock';
         addStatus(`✅ QSSM Proof: Valid — ${proof.benchmarkMs}ms <span class="tag">${engineLabel}</span>`);
+        setMetric('m-qssm', `${proof.benchmarkMs}ms · ${engineLabel}`);
         // Reveal the proof certificate
         document.getElementById('proof-details').innerHTML =
           `Beam ${proof.publicInputs?.beamId} · ${proof.publicInputs?.compliance} · ${proof.benchmarkMs}ms · ${engineLabel}`;
         proofCard.classList.add('show');
         activateStep(2);
 
-        const mmrRoot = await appendMMR(proof);
-        addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}...`);
+        const { root: mmrRoot, engine: mmrEngine } = await appendMMR(proof);
+        addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}... <span class="tag">${mmrEngine}</span>`);
+        setMetric('m-mmr', mmrRoot.slice(0, 10) + '…');
         activateStep(3);
 
         const compliant = (proof.publicInputs?.compliance || 'PASS') === 'PASS';
@@ -189,6 +273,7 @@
         const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
         addStatus(`⚡ Council (Round ${decision.rounds}): ${decision.verdict} <span class="tag">${councilLabel}</span>`);
         addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span class="swatch" style="background:${decision.color};"></span>`);
+        setMetric('m-harmony', decision.harmony);
         if (decision.preMortem) {
           addStatus(`⚠️ Pre‑Mortem: ${decision.preMortem}`);
           addStatus(`🔍 Check: ${decision.preMortemCheck}`);
@@ -198,6 +283,7 @@
         const payment = await initiatePayment(decision.paymentAmount, 'demo_project_01');
         const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
         addStatus(`💳 Payment: ${payLabel}`);
+        setMetric('m-stripe', payment.status);
         activateStep(6);
 
         const proceed = decision.verdict.includes('proceed');
@@ -207,6 +293,7 @@
 
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
         addStatus(`✨ <strong>Demo complete in ${elapsed}s</strong>`);
+        buildDebugPanel({ proof, mmrRoot, mmrEngine, decision, payment });
 
         // Celebrate a successful, proceed-to-payment run.
         if (payment.status === 'succeeded' && proceed) {

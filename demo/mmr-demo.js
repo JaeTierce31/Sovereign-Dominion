@@ -30,7 +30,7 @@ export async function appendMMR(proof) {
       );
       const hex = Array.from(new Uint8Array(root)).map(b => b.toString(16).padStart(2, '0')).join('');
       console.log('[BENCHMARK] MMR append: real');
-      return '0x' + hex.slice(0, 16) + '...';
+      return { root: '0x' + hex.slice(0, 16) + '...', engine: 'wasm' };
     } catch (e) {
       console.warn('⚠️ Moloch MMR WASM execution failed, using mock:', e.message);
     }
@@ -41,5 +41,5 @@ export async function appendMMR(proof) {
   const mockRoot = '0x' + Array.from(proofBytes.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join('');
   await new Promise(r => setTimeout(r, 3));
   console.log('[BENCHMARK] MMR mock append: ~3ms');
-  return mockRoot;
+  return { root: mockRoot, engine: 'mock' };
 }
