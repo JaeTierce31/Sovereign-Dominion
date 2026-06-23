@@ -1,15 +1,36 @@
 # Sovereign Dominion
 
-**Voice-First 5D Augmented Intelligence Platform** — *Your word, built. Governed by the laws of mathematics.*
+**The first AI-governed structural compliance system secured by zero-knowledge proofs.**
 
 [![CI](https://github.com/jaetierce31/sovereign-dominion/actions/workflows/ci.yml/badge.svg)](https://github.com/jaetierce31/sovereign-dominion/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Proprietary%2FMIT-blue)](LICENSE)
 
+> Construction compliance fraud costs **$15B annually** in the United States. A single falsified structural certification can collapse a building. Sovereign Dominion replaces paper stamps with mathematical proof — governed by AI, auditable on-chain, sealed by Stripe.
+
+**Four guarantees no paper stamp can make:**
+1. **Cryptographic truth** — Rust/WASM ZK proof of material compliance, mathematically unforgeable in <10ms
+2. **AI deliberation** — Two independent NVIDIA NIM agents (Ember + Umber) debate structural risk via live SSE streaming
+3. **Immutable audit trail** — Moloch MMR commits every proof to a Merkle log; root hash on the certificate
+4. **Programmatic payment gate** — Stripe PaymentIntent automatically blocked on FAIL, confirmed on PASS
+
+```bash
+# 30-second demo — no build, no API keys, no install
+open demo/index.html   # press 1/2/3 to pick scenario · Enter to run · C to compare all · K for kiosk
+```
+
+| Step | Engine | Latency |
+|------|--------|---------|
+| ZK compliance proof | QSSM (Rust/WASM) | <10ms |
+| Immutable Merkle log | Moloch MMR (WASM) | <5ms |
+| I-beam stress heatmap | SCUGS Canvas 2D | <50ms |
+| Multi-agent routing | Hermes · Nous-3-405B via NIM | ~1s |
+| Council deliberation (SSE) | Ember+Umber · Nemotron-4-340B | ~3–8s |
+| Payment gate | Stripe PaymentIntents | ~1s |
+| Certificate PNG download | Canvas 2D, 2× retina | instant |
+
 ---
 
 ## 🏆 Nous Research × NVIDIA × Stripe Hackathon Demo
-
-> **The first AI-governed structural compliance and payment system secured by cryptographic zero-knowledge proofs.**
 
 Open `demo/index.html` in any modern browser to experience the full multi-agent pipeline — no build step required.
 

@@ -261,4 +261,11 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`SD Backend running on :${PORT}`));
+app.listen(PORT, () => {
+  const nvidia = !!process.env.NVIDIA_API_KEY;
+  const stripe = !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_placeholder');
+  console.log(`\n── Sovereign Dominion Backend ──────────────── :${PORT}`);
+  console.log(`  NVIDIA NIM   ${nvidia ? '● LIVE  · Nemotron-4-340B + Hermes-3-405B' : '○ MOCK  · set NVIDIA_API_KEY to enable live NIM'}`);
+  console.log(`  Stripe       ${stripe ? '● LIVE  · PaymentIntents (test mode)' : '○ MOCK  · set STRIPE_SECRET_KEY to enable live payments'}`);
+  console.log(`────────────────────────────────────────────────\n`);
+});

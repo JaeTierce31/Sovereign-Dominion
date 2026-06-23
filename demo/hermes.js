@@ -32,6 +32,7 @@ export async function orchestrateHermes(query, scenario = {}) {
       };
     }
   } catch (e) {
+    clearTimeout(timeout);
     console.warn('⚠️ Hermes backend unavailable:', e.message);
   }
 
