@@ -90,7 +90,7 @@ export function downloadCertificate(d) {
   row('DOMAIN',             domainCap);
   row('YIELD STRENGTH',     `${yieldKsi} ksi — req ≥ ${reqKsi} ksi`, yieldOk ? 'pass' : 'fail');
   row('ELASTIC MODULUS',    `${modMsi} Msi — req ≥ 29 Msi`, modOk ? 'pass' : 'fail');
-  row('QSSM PROOF ENGINE',  `${d.benchmarkMs || '—'}ms · ${(d.benchmarkMs || 0) < 20 ? 'WASM' : 'mock'}`);
+  row('QSSM PROOF ENGINE',  `${d.benchmarkMs || '—'}ms · ${d.engine === 'wasm' ? 'WASM' : 'mock'}`);
   row('φ-HARMONY SCORE', d.harmony || '—');
   row('MOLOCH MMR ROOT',    d.mmrRoot ? d.mmrRoot.slice(0, 26) + '…' : '—');
   if (d.paymentId) {

@@ -1,6 +1,6 @@
 // Sovereign Dominion — Service Worker
 // Cache version: bump this string whenever assets change to invalidate old caches.
-const CACHE = 'sd-demo-v1';
+const CACHE = 'sd-demo-v2';
 
 // Pre-cached on install — all local demo assets
 const PRECACHE = [
