@@ -91,6 +91,12 @@ Construction compliance fraud costs $15B annually in the United States. A single
 
 ---
 
+### The Architecture Behind the Demo
+
+Every step in this pipeline — proof, audit, visualization, AI deliberation, payment — follows the same loop: **Intent → Verify → Execute → Observe**. That recursive uniformity isn't accidental. It points at where Sovereign Dominion is going: a compiler-defined execution substrate where structural compliance, medical workflows, financial audits, and supply chain provenance all run as instances of the same constitutional kernel. What the demo ships is the proof of concept. What the roadmap builds is the compiler. See [`docs/HACKATHON.md`](docs/HACKATHON.md) for the full vision and submission narrative.
+
+---
+
 ## Overview
 
 Sovereign Dominion is a browser-native AR construction platform that combines:
