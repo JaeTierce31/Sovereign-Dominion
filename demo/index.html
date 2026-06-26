@@ -723,7 +723,7 @@
           proofStamp.style.color = 'var(--accent)';
           proofStamp.style.borderColor = 'var(--accent)';
         }
-        graph.complete('qssm', [proof.publicInputs?.compliance, `${proof.benchmarkMs}ms`]);
+        graph.complete('qssm', [proof.publicInputs?.compliance, `proof ${proof.benchmarkMs}ms`, 'RLWE n=1024']);
         proofCard.classList.add('show');
         showCompliancePanel(proof, activeScenario);
         activateStep(2);
@@ -731,7 +731,7 @@
         // ── Step 3: Moloch MMR ─────────────────────────────────────────────
         graph.start('mmr');
         const { root: mmrRoot, engine: mmrEngine } = await appendMMR(proof);
-        graph.complete('mmr', [mmrRoot.slice(0, 16)]);
+        graph.complete('mmr', [`root ${mmrRoot.slice(0, 12)}…`]);
         addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}… <span class="tag">${mmrEngine}</span>`);
         setMetric('m-mmr', mmrRoot.slice(0, 10) + '…');
         activateStep(3);

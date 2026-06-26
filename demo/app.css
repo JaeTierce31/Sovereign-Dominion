@@ -940,29 +940,52 @@ button.chromatic:disabled {
 .exec-graph { display: flex; flex-direction: column; }
 .eg-node {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-  transition: opacity 0.2s;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 4px 0;
+  transition: opacity 0.25s ease;
 }
+.eg-pending { opacity: 0.55; }
 .eg-connector {
-  width: 1px;
-  height: 6px;
+  width: 2px;
+  height: 8px;
   margin-left: 8px;
-  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.10);
+  transition: background 0.4s ease;
+}
+/* Live edge: the execution wave has passed through. A travelling highlight
+   reads as data flowing downstream rather than a static rule. */
+.eg-connector-live {
+  background: linear-gradient(rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.5));
+  background-size: 100% 200%;
+  animation: egFlow 1.1s linear infinite;
+}
+.eg-connector-dead { background: rgba(239, 68, 68, 0.4); }
+@keyframes egFlow {
+  from { background-position: 0 -200%; }
+  to   { background-position: 0 200%; }
 }
 .eg-icon {
   width: 16px;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
   flex-shrink: 0;
-  transition: color 0.2s;
+  transition: color 0.25s ease, transform 0.25s ease;
 }
 .eg-body {
   display: flex;
+  flex-direction: column;
   flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.eg-header-row {
+  display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 8px;
   min-width: 0;
 }
 .eg-label {
@@ -972,22 +995,58 @@ button.chromatic:disabled {
   white-space: nowrap;
 }
 .eg-meta {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-family: var(--mono);
   color: rgba(255, 255, 255, 0.35);
   white-space: nowrap;
-  margin-left: 8px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Evidence chips — the artifacts each completed stage emits */
+.eg-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.eg-chip {
+  font-size: 0.58rem;
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  color: rgba(190, 242, 200, 0.9);
+  white-space: nowrap;
+  animation: egChipIn 0.32s ease both;
+}
+.eg-failed .eg-chip {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: rgba(254, 202, 202, 0.9);
+}
+@keyframes egChipIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 /* State colours */
 .eg-pending .eg-icon { color: rgba(255, 255, 255, 0.25); }
-.eg-running .eg-icon { color: var(--accent-2); }
+.eg-running .eg-icon {
+  color: var(--accent-2);
+  animation: egPulse 0.9s ease-in-out infinite;
+}
 .eg-running .eg-label { color: var(--accent-2); }
 .eg-running .eg-meta { color: var(--accent-2); opacity: 0.7; }
 .eg-success .eg-icon { color: var(--ok); }
-.eg-success .eg-meta { color: rgba(34, 197, 94, 0.6); }
+.eg-success .eg-meta { color: rgba(34, 197, 94, 0.55); }
 .eg-failed .eg-icon { color: #ef4444; }
 .eg-failed .eg-label { color: #ef4444; }
 .eg-failed .eg-meta { color: rgba(239, 68, 68, 0.7); }
+@keyframes egPulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.3); opacity: 0.6; }
+}
 
 /* ===== Small screens ===== */
 @media (max-width: 360px) {

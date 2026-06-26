@@ -61,10 +61,18 @@ export class ExecutionGraph {
 }
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
-// Renders a vertical node chain into a container element.
+// Renders a vertical node chain into a container element. Each node is a row:
+//   [icon] [label · capability/timing] + a wrapped row of evidence chips.
+// Every stage that completes leaves visible artifacts behind, so the graph
+// reads as computation producing evidence rather than boxes changing colour.
 
-const STATUS_ICON = { pending: '○', running: '◎', success: '●', failed: '✕' };
+const STATUS_ICON = { pending: '○', running: '◆', success: '●', failed: '✕' };
 const STATUS_CLASS = { pending: 'eg-pending', running: 'eg-running', success: 'eg-success', failed: 'eg-failed' };
+
+function chipText(value) {
+  const s = String(value ?? '').trim();
+  return s.length > 28 ? s.slice(0, 27) + '…' : s;
+}
 
 export function renderExecGraph(container, nodes) {
   if (!container) return;
@@ -82,6 +90,9 @@ export function renderExecGraph(container, nodes) {
     const body = document.createElement('span');
     body.className = 'eg-body';
 
+    const header = document.createElement('span');
+    header.className = 'eg-header-row';
+
     const name = document.createElement('span');
     name.className = 'eg-label';
     name.textContent = node.label;
@@ -90,24 +101,47 @@ export function renderExecGraph(container, nodes) {
     meta.className = 'eg-meta';
     if (node.status === 'running') {
       meta.textContent = node.capability;
-    } else if (node.status === 'success' && node.durationMs != null) {
-      meta.textContent = `${node.durationMs}ms`;
+    } else if (node.status === 'success') {
+      meta.textContent = node.durationMs != null ? `${node.capability} · ${node.durationMs}ms` : node.capability;
     } else if (node.status === 'failed') {
       meta.textContent = node.outputs[0] || 'failed';
     } else {
       meta.textContent = node.capability;
     }
 
-    body.appendChild(name);
-    body.appendChild(meta);
+    header.appendChild(name);
+    header.appendChild(meta);
+    body.appendChild(header);
+
+    // Evidence chips — the artifacts each stage emits. Only render once the
+    // node has produced something meaningful (success with outputs).
+    const evidence = (node.status === 'success' || node.status === 'failed')
+      ? (node.outputs || []).filter(o => o != null && String(o).trim() !== '')
+      : [];
+    if (evidence.length) {
+      const chips = document.createElement('span');
+      chips.className = 'eg-evidence';
+      evidence.forEach(o => {
+        const chip = document.createElement('span');
+        chip.className = 'eg-chip';
+        chip.textContent = chipText(o);
+        chip.title = String(o);
+        chips.appendChild(chip);
+      });
+      body.appendChild(chips);
+    }
+
     wrap.appendChild(icon);
     wrap.appendChild(body);
     container.appendChild(wrap);
 
-    // Connector line between nodes
+    // Connector between nodes. Once the upstream node has completed, the edge
+    // is "live" — the execution wave has passed through it.
     if (i < nodes.length - 1) {
       const line = document.createElement('div');
-      line.className = 'eg-connector';
+      const flowed = node.status === 'success';
+      const failed = node.status === 'failed';
+      line.className = `eg-connector${flowed ? ' eg-connector-live' : ''}${failed ? ' eg-connector-dead' : ''}`;
       container.appendChild(line);
     }
   });
