@@ -176,6 +176,15 @@
           </button>
         </div>
 
+        <!-- Execution Graph — live node visualization of the 7-step pipeline -->
+        <div id="exec-graph-panel" class="exec-graph-panel hidden" aria-label="Execution graph">
+          <div class="eg-header">
+            <span class="eg-title">Execution Graph</span>
+            <span id="eg-intent-id" class="eg-intent-id"></span>
+          </div>
+          <div id="exec-graph" class="exec-graph"></div>
+        </div>
+
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
 
         <!-- Compare all scenarios -->
@@ -218,6 +227,9 @@
     import { launchConfetti } from './confetti.js';
     import { initBeam, setBeamColor, isBeamReady } from './three-beam.js';
     import { downloadCertificate } from './certificate.js';
+    import { createIntent } from './intent.js';
+    import { ExecutionGraph, renderExecGraph } from './exec-graph.js';
+    import { refreshHealth } from './capability-registry.js';
 
     let isRunning = false;
     let beamAvailable = false;
@@ -650,6 +662,10 @@
       document.getElementById('hermes-card')?.classList.add('hidden');
       document.getElementById('stripe-receipt')?.classList.add('hidden');
       document.getElementById('cert-btn')?.classList.add('hidden');
+      const _egPanel = document.getElementById('exec-graph-panel');
+      if (_egPanel) _egPanel.classList.add('hidden');
+      const _egContainer = document.getElementById('exec-graph');
+      if (_egContainer) _egContainer.innerHTML = '';
       const _gaugeEl = document.getElementById('harmony-gauge');
       if (_gaugeEl) { _gaugeEl.classList.add('hidden'); _gaugeEl.setAttribute('aria-hidden', 'true'); }
       const _gaugeArc = document.getElementById('gauge-arc');
@@ -660,11 +676,32 @@
       addStatus(`🔄 Initializing Symbiosis Engine — ${activeScenario.label}…`);
       activateStep(1);
 
+      // ── Canonical Intent ───────────────────────────────────────────────────
+      const intent = createIntent(activeScenario);
+
+      // ── Execution Graph setup ──────────────────────────────────────────────
+      const graph = new ExecutionGraph(intent.id);
+      const egPanel = document.getElementById('exec-graph-panel');
+      const egContainer = document.getElementById('exec-graph');
+      const egIntentEl = document.getElementById('eg-intent-id');
+      if (egPanel) egPanel.classList.remove('hidden');
+      if (egIntentEl) egIntentEl.textContent = intent.id;
+      graph.onChange(nodes => renderExecGraph(egContainer, nodes));
+
+      graph.addNode('qssm',    'QSSM ZK Proof',       'qssm');
+      graph.addNode('mmr',     'Moloch MMR',           'wasm');
+      graph.addNode('scugs',   'SCUGS Beam Viz',       'canvas');
+      graph.addNode('hermes',  'Hermes Orchestration', 'nvidia/hermes-3');
+      graph.addNode('council', 'Chromatic Council',    'nvidia/nemotron');
+      graph.addNode('stripe',  'Stripe Payment',       'stripe');
+      graph.addNode('esther',  'Esther Voice',         'web-speech');
+
       const streamController = new AbortController();
       const t0 = performance.now();
 
       try {
         // ── Step 2: QSSM ZK Proof ──────────────────────────────────────────
+        graph.start('qssm');
         const proof = await runQSSMDemo({
           forceFailure: activeScenario.forceFailure,
           beamId: activeScenario.beamId,
@@ -686,17 +723,21 @@
           proofStamp.style.color = 'var(--accent)';
           proofStamp.style.borderColor = 'var(--accent)';
         }
+        graph.complete('qssm', [proof.publicInputs?.compliance, `${proof.benchmarkMs}ms`]);
         proofCard.classList.add('show');
         showCompliancePanel(proof, activeScenario);
         activateStep(2);
 
         // ── Step 3: Moloch MMR ─────────────────────────────────────────────
+        graph.start('mmr');
         const { root: mmrRoot, engine: mmrEngine } = await appendMMR(proof);
+        graph.complete('mmr', [mmrRoot.slice(0, 16)]);
         addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}… <span class="tag">${mmrEngine}</span>`);
         setMetric('m-mmr', mmrRoot.slice(0, 10) + '…');
         activateStep(3);
 
         // ── Step 4: SCUGS / 3D Beam ───────────────────────────────────────
+        graph.start('scugs');
         const yieldKsi    = activeScenario.forceFailure ? 28 : (activeScenario.domain === 'seismic' ? 50 : 40);
         const modMsi      = activeScenario.forceFailure ? 20 : 29;
         const requiredKsi = 36;
@@ -705,14 +746,17 @@
         } else {
           renderSCUGS({ compliant, beamId: activeScenario.beamId, domain: activeScenario.domain, yieldKsi, requiredKsi });
         }
+        graph.complete('scugs', [compliant ? 'within-tolerance' : 'violation-detected']);
         addStatus(`✅ SCUGS Tier‑1 Render: ${compliant ? 'Active' : 'VIOLATION DETECTED'}`);
         activateStep(4);
 
         // ── Hermes orchestration ───────────────────────────────────────────
+        graph.start('hermes');
         const hermesResult = await orchestrateHermes(
           `Assess beam ${activeScenario.beamId} for ${activeScenario.label}. ${activeScenario.query}`,
           { compliance: proof.publicInputs?.compliance, domain: activeScenario.domain, beamId: activeScenario.beamId }
         );
+        graph.complete('hermes', hermesResult.agents || []);
         addStatus(`🧠 Hermes: ${hermesResult.orchestration}`);
         showHermesCard(hermesResult);
 
@@ -759,6 +803,7 @@
         }).catch(e => { if (e.name !== 'AbortError') console.warn('Council SSE:', e.message); });
 
         // ── Step 5: Chromatic Council (critical path) ─────────────────────
+        graph.start('council');
         const decision = await deliberateCouncil({
           ...proof.publicInputs,
           beamId: activeScenario.beamId, domain: activeScenario.domain, label: activeScenario.label
@@ -772,6 +817,7 @@
         animateCouncil(decision);
         animateGauge(decision.harmony, decision.color);
 
+        graph.complete('council', [decision.verdict, `φ=${decision.harmony}`]);
         const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
         addStatus(
           `⚡ Council (Round ${decision.rounds}): ${decision.verdict} <span class="tag">${councilLabel}</span>`,
@@ -786,28 +832,34 @@
         activateStep(5);
 
         // ── Step 6: Stripe Payment ─────────────────────────────────────────
+        graph.start('stripe');
         const councilProceed = decision.verdict.includes('proceed');
         let payment = null;
 
         if (compliant && councilProceed) {
           payment = await initiatePayment(decision.paymentAmount, activeScenario.beamId);
+          graph.complete('stripe', [payment.status, payment.id?.slice(0, 12) || 'mock']);
           const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
           addStatus(`💳 Payment: ${payLabel}`);
           setMetric('m-stripe', payment.status);
           showReceiptCard(payment, activeScenario.beamId);
         } else {
+          graph.fail('stripe', 'blocked-compliance');
           addStatus(`🚫 Payment blocked — compliance violation on ${activeScenario.beamId}`, 'error');
           setMetric('m-stripe', 'BLOCKED');
         }
         activateStep(6);
 
         // ── Step 7: Esther voice + completion ─────────────────────────────
+        graph.start('esther');
         if (compliant && councilProceed) {
           speakEsther(`Compliance seal complete. ${activeScenario.label} certified. Payment processed. Sovereign Dominion seal issued.`);
           addStatus('🎤 Esther: Compliance seal confirmed');
+          graph.complete('esther', ['seal-confirmed']);
         } else {
           speakEsther(`Compliance failure on ${activeScenario.label}. Beam ${activeScenario.beamId} does not meet structural requirements. Human engineering review required immediately.`);
           addStatus('🎤 Esther: Failure alert issued', 'error');
+          graph.complete('esther', ['failure-alert']);
         }
         activateStep(7);
 
@@ -864,6 +916,9 @@
           .catch(err => console.warn('SW registration failed:', err));
       });
     }
+
+    // Populate capability health from backend (best-effort)
+    refreshHealth();
   </script>
 </body>
 </html>

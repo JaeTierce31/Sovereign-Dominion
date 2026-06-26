@@ -906,6 +906,89 @@ button.chromatic:disabled {
 .cert-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .cert-btn-wrap { text-align: center; }
 
+/* ===== Execution Graph ===== */
+.exec-graph-panel {
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: rgba(255, 69, 0, 0.04);
+  border: 1px solid rgba(255, 69, 0, 0.18);
+  border-radius: 10px;
+}
+.eg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.eg-title {
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.eg-intent-id {
+  font-size: 0.6rem;
+  font-family: var(--mono);
+  color: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+.exec-graph { display: flex; flex-direction: column; }
+.eg-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  transition: opacity 0.2s;
+}
+.eg-connector {
+  width: 1px;
+  height: 6px;
+  margin-left: 8px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.eg-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.eg-body {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: baseline;
+  min-width: 0;
+}
+.eg-label {
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  color: var(--text);
+  white-space: nowrap;
+}
+.eg-meta {
+  font-size: 0.65rem;
+  font-family: var(--mono);
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  margin-left: 8px;
+}
+/* State colours */
+.eg-pending .eg-icon { color: rgba(255, 255, 255, 0.25); }
+.eg-running .eg-icon { color: var(--accent-2); }
+.eg-running .eg-label { color: var(--accent-2); }
+.eg-running .eg-meta { color: var(--accent-2); opacity: 0.7; }
+.eg-success .eg-icon { color: var(--ok); }
+.eg-success .eg-meta { color: rgba(34, 197, 94, 0.6); }
+.eg-failed .eg-icon { color: #ef4444; }
+.eg-failed .eg-label { color: #ef4444; }
+.eg-failed .eg-meta { color: rgba(239, 68, 68, 0.7); }
+
 /* ===== Small screens ===== */
 @media (max-width: 360px) {
   header h1 { font-size: 1.6rem; }
