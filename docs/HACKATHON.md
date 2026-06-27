@@ -38,7 +38,7 @@ flowchart LR
 
 | Step | Module | What happens |
 |------|--------|-------------|
-| 1. Input | `index.html` | User selects a scenario (Chicago Tower, SF Retrofit, Non-Compliant) or speaks a project name. Three test scenarios pre-loaded. |
+| 1. Input | `index.html` | User selects a scenario (First Avenue, SF Retrofit, Non-Compliant) or speaks a project name. Three test scenarios pre-loaded. |
 | 2. QSSM ZK Proof | `qssm-demo.js` + `pkg/qssm_rs.wasm` | Rust/WASM zero-knowledge proof engine. Verifies yield strength (≥36 ksi) and elastic modulus (≥29 Msi) against IBC 1604 thresholds. Returns `{ proof: Uint8Array, compliance: 'PASS'|'FAIL', benchmarkMs }`. Falls back to deterministic mock. |
 | 3. Moloch MMR | `mmr-demo.js` + `pkg/moloch_mmr.wasm` | Rust/WASM Merkle Mountain Range. Appends each proof to an immutable audit log. Returns cryptographic root hash. |
 | 4. SCUGS Beam Viz | `scugs-demo.js` / `three-beam.js` | Canvas 2D stress heatmap of the I-beam cross-section. Optional Three.js 3D upgrade via CDN import map. FAIL state shows pulsing red at extreme fiber. |
@@ -106,7 +106,7 @@ Or simply open `demo/index.html` directly in Chrome.
 
 ### Running the demo
 
-1. **Press `1`** — Load "Chicago Tower" (PASS scenario)
+1. **Press `1`** — Load "First Avenue" (Minneapolis, MN — PASS scenario)
 2. **Press Enter** — Run the 7-step pipeline
 3. Watch each step complete in sequence:
    - QSSM proof appears with timing and engine tag
@@ -163,7 +163,7 @@ Then open `http://localhost:8080` — the pipeline will use real NIM and Stripe 
 > "A falsified weld certification contributed to the collapse of the Fern Hollow Bridge in Pittsburgh. We built the system that makes that impossible. This is Sovereign Dominion — a structural compliance pipeline where mathematical proofs replace paper stamps."
 
 **0:10–0:20 — Setup**
-> "I'm going to run a compliance check on a steel I-beam for a Chicago high-rise. The pipeline has seven steps: zero-knowledge proof, Merkle audit log, 3D stress visualization, AI orchestration, council deliberation, payment gate, and voice report. Let's go."
+> "I'm going to run a compliance check on a steel I-beam for the First Avenue high-rise in Minneapolis. The pipeline has seven steps: zero-knowledge proof, Merkle audit log, 3D stress visualization, AI orchestration, council deliberation, payment gate, and voice report. Let's go."
 > *(Press `1`, then `Enter`)*
 
 **0:20–0:40 — Pipeline runs**

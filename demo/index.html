@@ -60,12 +60,12 @@
 
         <!-- Scenario picker cards -->
         <div id="scenario-picker" class="scenario-picker" role="group" aria-label="Select demo scenario">
-          <button class="scenario-card active" data-scenario="chicago"
+          <button class="scenario-card active" data-scenario="firstave"
               data-beam-id="B-001" data-domain="structural" data-fail="false"
-              data-label="Chicago Tower"
-              data-query="Assess structural beam B-001 for 95-story Chicago tower. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.">
+              data-label="First Avenue"
+              data-query="Assess structural beam B-001 for the First Avenue high-rise, Minneapolis MN. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.">
             <span class="sc-icon">🏗️</span>
-            <span class="sc-name">Chicago Tower</span>
+            <span class="sc-name">First Avenue</span>
             <span class="sc-badge pass">PASS</span>
           </button>
           <button class="scenario-card" data-scenario="sf"
@@ -101,7 +101,7 @@
         <div class="run-row">
           <button id="voice-btn" class="voice-btn"
               aria-label="Voice input — speak to select scenario"
-              title="Say: Chicago Tower, SF Retrofit, or Fail Case">🎤</button>
+              title="Say: First Avenue, SF Retrofit, or Fail Case">🎤</button>
           <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
           <button class="voice-btn" style="font-size:0.75rem;padding:0 10px;opacity:0.55;" onclick="document.getElementById('kb-help').style.display='flex'" title="Keyboard shortcuts">⌨️</button>
         </div>
@@ -235,12 +235,12 @@
     let beamAvailable = false;
 
     let activeScenario = {
-      scenario: 'chicago', beamId: 'B-001', domain: 'structural', forceFailure: false,
-      label: 'Chicago Tower',
-      query: 'Assess structural beam B-001 for 95-story Chicago tower. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.'
+      scenario: 'firstave', beamId: 'B-001', domain: 'structural', forceFailure: false,
+      label: 'First Avenue',
+      query: 'Assess structural beam B-001 for the First Avenue high-rise, Minneapolis MN. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.'
     };
 
-    // ── URL deep-link: ?scenario=chicago|sf|fail ────────────────────────────
+    // ── URL deep-link: ?scenario=firstave|sf|fail ───────────────────────────
     const urlScenario = new URLSearchParams(location.search).get('scenario');
     if (urlScenario) {
       const sc = document.querySelector(`[data-scenario="${urlScenario}"]`);
@@ -325,7 +325,7 @@
       recognition.onresult = (e) => {
         const t = e.results[0][0].transcript.toLowerCase();
         let target = null;
-        if (t.includes('chicago') || t.includes('tower') || t.includes('first') || t.includes('one')) target = 'chicago';
+        if (t.includes('first') || t.includes('avenue') || t.includes('minneapolis') || t.includes('tower')) target = 'firstave';
         else if (t.includes('san francisco') || t.includes('sf') || t.includes('bridge') || t.includes('seismic') || t.includes('retrofit')) target = 'sf';
         else if (t.includes('fail') || t.includes('non') || t.includes('bad') || t.includes('invalid') || t.includes('error')) target = 'fail';
         if (target) { const card = document.querySelector(`[data-scenario="${target}"]`); if (card) card.click(); }
@@ -511,7 +511,7 @@
     kbHelp.id = 'kb-help';
     kbHelp.innerHTML = `<div class="kb-inner">
       <div class="kb-title">⌨️ Keyboard Shortcuts</div>
-      <div class="kb-row"><kbd>1</kbd> Chicago Tower &nbsp; <kbd>2</kbd> SF Retrofit &nbsp; <kbd>3</kbd> FAIL Case</div>
+      <div class="kb-row"><kbd>1</kbd> First Avenue &nbsp; <kbd>2</kbd> SF Retrofit &nbsp; <kbd>3</kbd> FAIL Case</div>
       <div class="kb-row"><kbd>Enter</kbd> Run Demo &nbsp; <kbd>C</kbd> Compare All</div>
       <div class="kb-row"><kbd>K</kbd> Toggle Kiosk Mode &nbsp; <kbd>Esc</kbd> Close</div>
     </div>`;
@@ -527,7 +527,7 @@
     document.addEventListener('keydown', e => {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.key === '1') document.querySelector('[data-scenario="chicago"]')?.click();
+      if (e.key === '1') document.querySelector('[data-scenario="firstave"]')?.click();
       else if (e.key === '2') document.querySelector('[data-scenario="sf"]')?.click();
       else if (e.key === '3') document.querySelector('[data-scenario="fail"]')?.click();
       else if ((e.key === 'Enter' || e.key === ' ') && !isRunning) { e.preventDefault(); document.getElementById('run-demo')?.click(); }
@@ -540,7 +540,7 @@
     // ── Kiosk / presentation auto-run mode ─────────────────────────────────
     let kioskTimer = null;
     let kioskIndex = 0;
-    const kioskScenarios = ['chicago', 'sf', 'fail'];
+    const kioskScenarios = ['firstave', 'sf', 'fail'];
 
     async function kioskStep() {
       if (!kioskTimer) return;

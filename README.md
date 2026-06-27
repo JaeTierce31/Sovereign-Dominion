@@ -72,7 +72,7 @@ npx serve demo
 
 | Scenario | Key | Result |
 |----------|-----|--------|
-| Chicago Tower (95-story) | `1` | ✅ PASS — 40 ksi yield, IBC compliant, payment succeeds |
+| First Avenue (Minneapolis, MN) | `1` | ✅ PASS — 40 ksi yield, IBC compliant, payment succeeds |
 | SF Bay Retrofit (seismic zone 4) | `2` | ✅ PASS — 50 ksi yield, AISC 360 compliant, payment succeeds |
 | Non-compliant beam | `3` | ❌ FAIL — 28 ksi yield (22% below IBC minimum), payment blocked |
 
