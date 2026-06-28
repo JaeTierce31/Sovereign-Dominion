@@ -103,8 +103,13 @@
               aria-label="Voice input — speak to select scenario"
               title="Say: First Avenue, SF Retrofit, or Fail Case">🎤</button>
           <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
+          <button id="music-btn" class="voice-btn" aria-label="Toggle soundtrack" title="Toggle soundtrack">🎵</button>
           <button class="voice-btn" style="font-size:0.75rem;padding:0 10px;opacity:0.55;" onclick="document.getElementById('kb-help').style.display='flex'" title="Keyboard shortcuts">⌨️</button>
         </div>
+        <!-- Optional soundtrack — user-supplied, never autoplays. See assets/README.md -->
+        <audio id="demo-track" loop preload="none">
+          <source src="./assets/dont-tell-your-dreams.mp3" type="audio/mpeg">
+        </audio>
 
         <!-- Kiosk mode badge -->
         <div id="kiosk-badge" style="display:none;align-items:center;gap:6px;font-family:var(--mono);font-size:0.65rem;color:#ffaa00;border:1px solid rgba(255,170,0,0.35);border-radius:12px;padding:3px 10px;margin-bottom:0.5rem;letter-spacing:0.05em;">
@@ -185,6 +190,15 @@
           <div id="exec-graph" class="exec-graph"></div>
         </div>
 
+        <!-- Self-Healing — CRS loop: verify invariant → roll back → recover -->
+        <div id="self-healing-panel" class="self-healing-panel">
+          <div class="sh-header">
+            <span class="sh-title">Self-Healing Runtime</span>
+            <button id="inject-fault" class="sh-fault-btn" title="Corrupt the beam below IBC minimum">⚡ Inject Fault</button>
+          </div>
+          <div id="self-healing" class="self-healing sh-state-safe"></div>
+        </div>
+
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
 
         <!-- Compare all scenarios -->
@@ -230,6 +244,7 @@
     import { createIntent } from './intent.js';
     import { ExecutionGraph, renderExecGraph } from './exec-graph.js';
     import { refreshHealth } from './capability-registry.js';
+    import { SelfHealingEngine, renderSelfHealing } from './self-healing.js';
 
     let isRunning = false;
     let beamAvailable = false;
@@ -662,6 +677,7 @@
       document.getElementById('hermes-card')?.classList.add('hidden');
       document.getElementById('stripe-receipt')?.classList.add('hidden');
       document.getElementById('cert-btn')?.classList.add('hidden');
+      document.body.classList.add('demo-live'); // choreography: intensify ambient motion
       const _egPanel = document.getElementById('exec-graph-panel');
       if (_egPanel) _egPanel.classList.add('hidden');
       const _egContainer = document.getElementById('exec-graph');
@@ -903,9 +919,62 @@
         console.error(e);
       } finally {
         streamController.abort();
+        document.body.classList.remove('demo-live');
         btn.disabled = false;
         btn.textContent = '▶ RUN DEMO';
         isRunning = false;
+      }
+    });
+
+    // ── Self-Healing runtime: invariant → rollback → recover ────────────────
+    const shEngine = new SelfHealingEngine();
+    const shRoot = document.getElementById('self-healing');
+    shEngine.onChange(e => renderSelfHealing(shRoot, e));
+    shEngine.commitStep();
+    shEngine.commitStep(); // seed a couple of verified-safe checkpoints
+    let shBusy = false;
+    document.getElementById('inject-fault')?.addEventListener('click', () => {
+      if (shBusy) return;
+      shBusy = true;
+      if (navigator.vibrate) navigator.vibrate([20, 60, 20]);
+      const panel = document.getElementById('self-healing-panel');
+      // 1. fault → invariant violation (red + shake)
+      shEngine.injectFault();
+      panel?.classList.add('sh-shake');
+      // 2. rollback (rewind sweep)
+      setTimeout(() => {
+        panel?.classList.remove('sh-shake');
+        panel?.classList.add('sh-rewind');
+        shEngine.rollback();
+      }, 750);
+      // 3. heal (green flash)
+      setTimeout(() => {
+        panel?.classList.remove('sh-rewind');
+        shEngine.heal();
+        shBusy = false;
+      }, 1500);
+    });
+
+    // ── Optional soundtrack toggle (user-supplied audio; never autoplays) ───
+    const musicBtn = document.getElementById('music-btn');
+    const track = document.getElementById('demo-track');
+    musicBtn?.addEventListener('click', async () => {
+      if (!track) return;
+      try {
+        if (track.paused) {
+          await track.play();
+          musicBtn.classList.add('playing');
+          musicBtn.textContent = '⏸';
+          document.body.classList.add('with-music');
+        } else {
+          track.pause();
+          musicBtn.classList.remove('playing');
+          musicBtn.textContent = '🎵';
+          document.body.classList.remove('with-music');
+        }
+      } catch {
+        musicBtn.title = 'No track found — add assets/dont-tell-your-dreams.mp3';
+        musicBtn.style.opacity = '0.4';
       }
     });
 

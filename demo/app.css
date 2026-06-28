@@ -1048,6 +1048,135 @@ button.chromatic:disabled {
   50%      { transform: scale(1.3); opacity: 0.6; }
 }
 
+/* ===== Self-Healing runtime ===== */
+.self-healing-panel {
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: rgba(34, 197, 94, 0.04);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  border-radius: 10px;
+  transition: border-color 0.3s, background 0.3s;
+}
+.sh-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.sh-title {
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ok);
+  opacity: 0.85;
+}
+.sh-fault-btn {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: rgba(255, 69, 0, 0.12);
+  border: 1px solid rgba(255, 69, 0, 0.4);
+  color: #ffb08a;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.sh-fault-btn:hover { background: rgba(255, 69, 0, 0.22); }
+.sh-fault-btn:active { transform: scale(0.96); }
+.sh-fault-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.self-healing { display: flex; flex-direction: column; gap: 8px; }
+.sh-statusline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.sh-badge {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: color 0.3s;
+}
+.sh-metric { font-family: var(--mono); font-size: 0.7rem; color: rgba(255, 255, 255, 0.55); }
+.sh-metric strong { color: var(--text); }
+.sh-min { opacity: 0.5; }
+
+/* Yield gauge with the IBC threshold marker */
+.sh-gauge {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.sh-gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ok);
+  transition: width 0.4s ease, background 0.3s;
+}
+.sh-gauge-threshold {
+  position: absolute;
+  top: -2px; bottom: -2px;
+  /* IBC min 36 ksi mapped onto the 20–45 ksi gauge range */
+  left: 64%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.sh-trace { display: flex; flex-direction: column; gap: 2px; }
+.sh-line {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.5);
+  animation: fadeIn 0.25s ease both;
+}
+.sh-line.sh-fault     { color: var(--accent-2); }
+.sh-line.sh-violation { color: #ef4444; }
+.sh-line.sh-rollback  { color: #a78bfa; }
+.sh-line.sh-healed    { color: var(--ok); }
+
+/* State theming of the whole panel */
+.sh-state-safe   .sh-badge { color: var(--ok); }
+.sh-state-fail   .sh-badge { color: #ef4444; }
+.sh-state-rollback .sh-badge { color: #a78bfa; }
+.sh-state-healed .sh-badge { color: var(--ok); }
+.self-healing-panel:has(.sh-state-fail) { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.05); }
+.self-healing-panel:has(.sh-state-rollback) { border-color: rgba(167, 139, 250, 0.5); background: rgba(167, 139, 250, 0.05); }
+.self-healing-panel:has(.sh-state-fail) .sh-gauge-fill { background: #ef4444; }
+
+/* Choreography: fault shake + rollback rewind sweep */
+.sh-shake { animation: shShake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shShake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.sh-rewind { position: relative; overflow: hidden; }
+.sh-rewind::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.25), transparent);
+  animation: shRewind 0.7s ease both;
+  pointer-events: none;
+}
+@keyframes shRewind {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(-100%); }
+}
+
+/* ===== Choreography: ambient intensification while a run is live ===== */
+body.demo-live::before { animation-duration: 9s; opacity: 0.7; }
+body.with-music::before { opacity: 0.85; }
+.music-btn.playing, #music-btn.playing { color: var(--accent-2); }
+
 /* ===== Small screens ===== */
 @media (max-width: 360px) {
   header h1 { font-size: 1.6rem; }

@@ -1,6 +1,6 @@
 // Sovereign Dominion — Service Worker
 // Cache version: bump this string whenever assets change to invalidate old caches.
-const CACHE = 'sd-demo-v3';
+const CACHE = 'sd-demo-v4';
 
 // Pre-cached on install — all local demo assets
 const PRECACHE = [
@@ -21,6 +21,7 @@ const PRECACHE = [
   './intent.js',
   './exec-graph.js',
   './capability-registry.js',
+  './self-healing.js',
   './icon-192.png',
   './icon-512.png',
   './pkg/moloch_mmr.js',
