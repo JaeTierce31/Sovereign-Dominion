@@ -80,6 +80,13 @@ npx serve demo
 
 **Kiosk / live demo mode:** append `?kiosk=1` to URL for fully automatic cycling through all 3 scenarios
 
+> **Runs fully offline (mock mode).** With no backend on `localhost:3001`, every
+> subsystem (QSSM, MMR, Hermes, Council, Stripe) falls back to a deterministic mock,
+> so the full pipeline still completes — this is the mode the deployed site and judges
+> use. Backend-reachability is wrapped in `try/catch` with the abort-timer hoisted
+> above the `try` (see `demo/hermes.js`, `demo/stripe.js`) so an unreachable backend
+> degrades cleanly instead of throwing. Add API keys (below) only for live NVIDIA/Stripe.
+
 ### Why it matters
 
 Construction compliance fraud costs $15B annually in the United States. A single falsified structural certification can lead to catastrophic building failures. Sovereign Dominion replaces paper stamps with:
