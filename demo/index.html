@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#ff4500">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="app.css">
+  <title>Sovereign Dominion | Hackathon Demo</title>
+  <!-- Import map: lets the no-build demo resolve Three.js from CDN.
+       Falls back to 2D canvas silently if network is unavailable. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://esm.sh/three@0.170.0"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Splash screen -->
+  <div id="splash">
+    <div class="splash-logo">🦅</div>
+    <p class="splash-text">Symbiosis Engine Initializing…</p>
+  </div>
+
+  <div id="app">
+    <header>
+      <h1>🦅 SOVEREIGN DOMINION</h1>
+      <p class="tagline">Your word, built. Governed by the laws of mathematics.</p>
+    </header>
+
+    <!-- Sponsor attribution bar -->
+    <div class="sponsor-bar">
+      <span class="sponsor-badge nvidia" title="Nemotron-4 Council + Hermes-3 Orchestration">⚡ NVIDIA NIM</span>
+      <span class="sponsor-badge stripe" title="Stripe PaymentIntents API">💳 Stripe</span>
+      <span class="sponsor-badge nous" title="Hermes-3-405B Orchestrator">🧠 Nous Research</span>
+    </div>
+
+    <!-- Live metrics strip -->
+    <div class="metrics-bar">
+      <div class="metric-cell"><div class="metric-label">QSSM</div><div class="metric-value" id="m-qssm">—</div></div>
+      <div class="metric-cell"><div class="metric-label">MMR</div><div class="metric-value" id="m-mmr">—</div></div>
+      <div class="metric-cell"><div class="metric-label">φ-Harmony</div><div class="metric-value" id="m-harmony">—</div></div>
+      <div class="metric-cell"><div class="metric-label">Stripe</div><div class="metric-value" id="m-stripe">—</div></div>
+    </div>
+
+    <!-- System status chips -->
+    <div class="system-status">
+      <span class="sys-chip" id="sys-nvidia"><span class="sys-dot"></span>NVIDIA NIM</span>
+      <span class="sys-chip" id="sys-stripe"><span class="sys-dot"></span>Stripe</span>
+      <span class="sys-chip" id="sys-wasm"><span class="sys-dot"></span>QSSM WASM</span>
+    </div>
+
+    <main>
+      <section id="demo-flow">
+
+        <!-- Scenario picker cards -->
+        <div id="scenario-picker" class="scenario-picker" role="group" aria-label="Select demo scenario">
+          <button class="scenario-card active" data-scenario="firstave"
+              data-beam-id="B-001" data-domain="structural" data-fail="false"
+              data-label="First Avenue"
+              data-query="Assess structural beam B-001 for the First Avenue high-rise, Minneapolis MN. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.">
+            <span class="sc-icon">🏗️</span>
+            <span class="sc-name">First Avenue</span>
+            <span class="sc-badge pass">PASS</span>
+          </button>
+          <button class="scenario-card" data-scenario="sf"
+              data-beam-id="B-002" data-domain="seismic" data-fail="false"
+              data-label="SF Retrofit"
+              data-query="Assess seismic retrofit beam B-002 for San Francisco Bay Bridge. Zone 4 seismic, yield 50 ksi, AISC 360 compliant.">
+            <span class="sc-icon">🌉</span>
+            <span class="sc-name">SF Retrofit</span>
+            <span class="sc-badge pass">PASS</span>
+          </button>
+          <button class="scenario-card" data-scenario="fail"
+              data-beam-id="B-FAIL" data-domain="structural" data-fail="true"
+              data-label="FAIL Case"
+              data-query="Assess non-compliant beam B-FAIL. Yield 28 ksi — fails IBC 1604 minimum 36 ksi. Elastic modulus 20 Msi — fails 29 Msi threshold.">
+            <span class="sc-icon">⚠️</span>
+            <span class="sc-name">FAIL Case</span>
+            <span class="sc-badge fail">NON-COMPLIANT</span>
+          </button>
+        </div>
+
+        <!-- Pipeline step indicator -->
+        <div id="steps" aria-hidden="true">
+          <span class="step" data-step="1" title="Voice intake">🎤</span>
+          <span class="step" data-step="2" title="QSSM proof">🔐</span>
+          <span class="step" data-step="3" title="Moloch MMR">🌲</span>
+          <span class="step" data-step="4" title="SCUGS render">👁️</span>
+          <span class="step" data-step="5" title="Chromatic Council">🧠</span>
+          <span class="step" data-step="6" title="Stripe payment">💳</span>
+          <span class="step" data-step="7" title="Sealed">✅</span>
+        </div>
+
+        <!-- Voice + run button row -->
+        <div class="run-row">
+          <button id="voice-btn" class="voice-btn"
+              aria-label="Voice input — speak to select scenario"
+              title="Say: First Avenue, SF Retrofit, or Fail Case">🎤</button>
+          <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
+          <button id="music-btn" class="voice-btn" aria-label="Toggle soundtrack" title="Toggle soundtrack">🎵</button>
+          <button class="voice-btn" style="font-size:0.75rem;padding:0 10px;opacity:0.55;" onclick="document.getElementById('kb-help').style.display='flex'" title="Keyboard shortcuts">⌨️</button>
+        </div>
+        <!-- Optional soundtrack — user-supplied, never autoplays. See assets/README.md -->
+        <audio id="demo-track" loop preload="none">
+          <source src="./assets/dont-tell-your-dreams.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- Kiosk mode badge -->
+        <div id="kiosk-badge" style="display:none;align-items:center;gap:6px;font-family:var(--mono);font-size:0.65rem;color:#ffaa00;border:1px solid rgba(255,170,0,0.35);border-radius:12px;padding:3px 10px;margin-bottom:0.5rem;letter-spacing:0.05em;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#ffaa00;animation:pulse 1s ease-in-out infinite;flex-shrink:0;display:inline-block;"></span>
+          KIOSK ACTIVE — press K to stop
+        </div>
+
+        <!-- QSSM proof certificate -->
+        <div id="proof-card" class="proof-card" aria-hidden="true">
+          <div class="proof-seal" id="proof-seal">🛡️</div>
+          <div class="proof-title">QSSM v1.1 Compliance Proof</div>
+          <div class="proof-details" id="proof-details"></div>
+          <div class="proof-stamp" id="proof-stamp">VERIFIED</div>
+        </div>
+
+        <!-- IBC Compliance explanation panel -->
+        <div id="compliance-panel" class="compliance-panel hidden" aria-hidden="true">
+          <div class="compliance-title">📋 IBC 1604 Structural Assessment</div>
+          <div id="compliance-rules" class="compliance-rules"></div>
+        </div>
+
+        <!-- 3D/2D beam stage -->
+        <div id="beam-stage">
+          <canvas id="scugs-canvas"></canvas>
+        </div>
+
+        <!-- Chromatic Council: sequential deliberation + synthesis -->
+        <section id="council-section">
+          <div id="council-deliberation" class="council-deliberation hidden">
+            <div class="agent-row ember-row">
+              <span class="agent-label">Ember</span>
+              <p id="ember-text" class="agent-text"></p>
+            </div>
+            <div class="agent-row umber-row">
+              <span class="agent-label">Umber</span>
+              <p id="umber-text" class="agent-text"></p>
+            </div>
+          </div>
+          <div id="council-bar"></div>
+          <!-- φ-Harmony confidence gauge -->
+          <div id="harmony-gauge" class="harmony-gauge hidden" aria-hidden="true">
+            <svg viewBox="0 0 100 100" class="gauge-svg" role="img" aria-label="φ-Harmony score gauge">
+              <circle class="gauge-track" cx="50" cy="50" r="38"/>
+              <circle class="gauge-arc" id="gauge-arc" cx="50" cy="50" r="38"/>
+              <text class="gauge-label" id="gauge-label" x="50" y="47">—</text>
+              <text class="gauge-sub" x="50" y="63">φ-HARMONY</text>
+            </svg>
+          </div>
+          <p id="council-rationale" class="council-rationale"></p>
+        </section>
+
+        <!-- Hermes routing card -->
+        <div id="hermes-card" class="hermes-card hidden" aria-hidden="true">
+          <div class="hermes-header">🧠 Hermes Orchestration</div>
+          <div id="hermes-pipeline" class="hermes-pipeline"></div>
+          <div id="hermes-rationale" class="hermes-rationale"></div>
+        </div>
+
+        <!-- Stripe receipt card -->
+        <div id="stripe-receipt" class="stripe-receipt hidden" aria-hidden="true">
+          <div class="receipt-header">💳 Payment Receipt</div>
+          <div id="receipt-rows" class="receipt-rows"></div>
+        </div>
+
+        <!-- Certificate download (shown after run completes) -->
+        <div class="cert-btn-wrap">
+          <button id="cert-btn" class="cert-btn hidden" aria-label="Download compliance certificate as PNG">
+            📄 Download Certificate
+          </button>
+        </div>
+
+        <!-- Execution Graph — live node visualization of the 7-step pipeline -->
+        <div id="exec-graph-panel" class="exec-graph-panel hidden" aria-label="Execution graph">
+          <div class="eg-header">
+            <span class="eg-title">Execution Graph</span>
+            <span id="eg-intent-id" class="eg-intent-id"></span>
+          </div>
+          <div id="exec-graph" class="exec-graph"></div>
+        </div>
+
+        <!-- Self-Healing — CRS loop: verify invariant → roll back → recover -->
+        <div id="self-healing-panel" class="self-healing-panel">
+          <div class="sh-header">
+            <span class="sh-title">Self-Healing Runtime</span>
+            <button id="inject-fault" class="sh-fault-btn" title="Corrupt the beam below IBC minimum">⚡ Inject Fault</button>
+          </div>
+          <div id="self-healing" class="self-healing sh-state-safe"></div>
+        </div>
+
+        <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
+
+        <!-- Compare all scenarios -->
+        <button id="compare-btn" class="compare-btn">⚖️ Compare All Scenarios</button>
+        <div id="comparison-table" class="comparison-table hidden"></div>
+
+        <!-- Technical Deep Dive — NVIDIA SSE stream + post-run debug data -->
+        <details id="debug-panel" class="debug-panel">
+          <summary>🔬 Technical Deep Dive</summary>
+          <div id="stream-preview" class="stream-preview hidden">
+            <div class="stream-header">NVIDIA NIM Streaming — Live Council Deliberation
+              <span id="stream-stats" style="float:right;font-size:0.58rem;opacity:0.6;letter-spacing:.04em;"></span>
+            </div>
+            <div id="stream-text" class="stream-text"></div>
+          </div>
+          <div id="debug-content" class="debug-content"></div>
+        </details>
+      </section>
+
+      <div id="council-overlay" class="hidden"></div>
+
+      <!-- Esther voice indicator -->
+      <div class="esther-stack">
+        <div class="esther-wave" id="esther-wave" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div id="esther-indicator" class="esther idle"></div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { runQSSMDemo } from './qssm-demo.js';
+    import { appendMMR } from './mmr-demo.js';
+    import { renderSCUGS } from './scugs-demo.js';
+    import { deliberateCouncil, animateCouncil } from './council-demo.js';
+    import { orchestrateHermes } from './hermes.js';
+    import { speakEsther } from './esther-demo.js';
+    import { initiatePayment } from './stripe.js';
+    import { launchConfetti } from './confetti.js';
+    import { initBeam, setBeamColor, isBeamReady } from './three-beam.js';
+    import { downloadCertificate } from './certificate.js';
+    import { createIntent } from './intent.js';
+    import { ExecutionGraph, renderExecGraph } from './exec-graph.js';
+    import { refreshHealth } from './capability-registry.js';
+    import { SelfHealingEngine, renderSelfHealing } from './self-healing.js';
+
+    let isRunning = false;
+    let beamAvailable = false;
+
+    let activeScenario = {
+      scenario: 'firstave', beamId: 'B-001', domain: 'structural', forceFailure: false,
+      label: 'First Avenue',
+      query: 'Assess structural beam B-001 for the First Avenue high-rise, Minneapolis MN. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.'
+    };
+
+    // ── URL deep-link: ?scenario=firstave|sf|fail ───────────────────────────
+    const urlScenario = new URLSearchParams(location.search).get('scenario');
+    if (urlScenario) {
+      const sc = document.querySelector(`[data-scenario="${urlScenario}"]`);
+      if (sc) {
+        document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+        sc.classList.add('active');
+        activeScenario = {
+          scenario: sc.dataset.scenario, beamId: sc.dataset.beamId,
+          domain: sc.dataset.domain, forceFailure: sc.dataset.fail === 'true',
+          label: sc.dataset.label, query: sc.dataset.query
+        };
+      }
+    }
+
+    // ── System status check (2 attempts, 3s apart for cold-start backends) ──
+    (async function fetchSystemStatus() {
+      const setChip = (id, ok) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const dot = el.querySelector('.sys-dot');
+        if (dot) dot.style.background = ok ? 'var(--ok)' : '#444';
+        el.classList.toggle('online', ok);
+      };
+      setChip('sys-wasm', typeof WebAssembly !== 'undefined');
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch('http://localhost:3001/health', { signal: AbortSignal.timeout(2000) });
+          if (res.ok) {
+            const { nvidia, stripe } = await res.json();
+            setChip('sys-nvidia', !!nvidia);
+            setChip('sys-stripe', !!stripe);
+            return;
+          }
+        } catch {}
+        if (attempt === 0) await new Promise(r => setTimeout(r, 3000));
+      }
+      setChip('sys-nvidia', false);
+      setChip('sys-stripe', false);
+    })();
+
+    // ── Splash dismiss ──────────────────────────────────────────────────────
+    function dismissSplash() {
+      const splash = document.getElementById('splash');
+      if (splash && !splash.dataset.gone) {
+        splash.dataset.gone = '1';
+        splash.style.opacity = '0';
+        setTimeout(() => splash.remove(), 800);
+      }
+    }
+    (async () => {
+      const stage = document.getElementById('beam-stage');
+      try {
+        beamAvailable = await initBeam(stage);
+        if (beamAvailable) { const c = document.getElementById('scugs-canvas'); if (c) c.style.display = 'none'; }
+      } catch { beamAvailable = false; }
+      dismissSplash();
+    })();
+    setTimeout(dismissSplash, 2500);
+
+    // ── Scenario picker ─────────────────────────────────────────────────────
+    document.querySelectorAll('.scenario-card').forEach(card => {
+      card.addEventListener('click', () => {
+        if (isRunning) return;
+        document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        activeScenario = {
+          scenario: card.dataset.scenario, beamId: card.dataset.beamId,
+          domain: card.dataset.domain, forceFailure: card.dataset.fail === 'true',
+          label: card.dataset.label, query: card.dataset.query
+        };
+      });
+    });
+
+    // ── Voice input ─────────────────────────────────────────────────────────
+    const voiceBtn = document.getElementById('voice-btn');
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      voiceBtn.style.display = 'none';
+    } else {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
+      recognition.onresult = (e) => {
+        const t = e.results[0][0].transcript.toLowerCase();
+        let target = null;
+        if (t.includes('first') || t.includes('avenue') || t.includes('minneapolis') || t.includes('tower')) target = 'firstave';
+        else if (t.includes('san francisco') || t.includes('sf') || t.includes('bridge') || t.includes('seismic') || t.includes('retrofit')) target = 'sf';
+        else if (t.includes('fail') || t.includes('non') || t.includes('bad') || t.includes('invalid') || t.includes('error')) target = 'fail';
+        if (target) { const card = document.querySelector(`[data-scenario="${target}"]`); if (card) card.click(); }
+        voiceBtn.classList.remove('listening');
+      };
+      recognition.onerror = () => voiceBtn.classList.remove('listening');
+      recognition.onend = () => voiceBtn.classList.remove('listening');
+      voiceBtn.addEventListener('click', () => {
+        if (isRunning) return;
+        voiceBtn.classList.add('listening');
+        try { recognition.start(); } catch { voiceBtn.classList.remove('listening'); }
+      });
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+
+    function activateStep(n) {
+      const el = document.querySelector(`.step[data-step="${n}"]`);
+      if (el) el.classList.add('active');
+    }
+    function resetSteps() { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); }
+
+    function addStatus(text, cls = '') {
+      const status = document.getElementById('status');
+      const line = document.createElement('div');
+      line.className = 'status-line' + (cls ? ' ' + cls : '');
+      line.innerHTML = text;
+      status.appendChild(line);
+      line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function setMetric(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value;
+      el.classList.remove('metric-live');
+      void el.offsetWidth;
+      el.classList.add('metric-live');
+    }
+
+    function typewriteEl(el, text, speed = 8) {
+      return new Promise(resolve => {
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { el.textContent = text; return resolve(); }
+        el.textContent = ''; let i = 0;
+        const tick = () => { el.textContent = text.slice(0, ++i); if (i < text.length) setTimeout(tick, speed); else resolve(); };
+        tick();
+      });
+    }
+
+    function showCompliancePanel(proof, scenario) {
+      const panel = document.getElementById('compliance-panel');
+      const rulesEl = document.getElementById('compliance-rules');
+      if (!panel || !rulesEl) return;
+      const compliant = proof.publicInputs?.compliance === 'PASS';
+      const yieldKsi = scenario.forceFailure ? 28 : (scenario.domain === 'seismic' ? 50 : 40);
+      const modMsi = scenario.forceFailure ? 20 : 29;
+      const rules = [
+        { label: 'IBC 1604.3 — Min. Yield Strength', value: `${yieldKsi} ksi`, req: '≥ 36 ksi', pass: yieldKsi >= 36 },
+        { label: 'AISC 360 — Elastic Modulus',        value: `${modMsi} Msi`,  req: '≥ 29 Msi',  pass: modMsi >= 29 },
+        { label: 'IBC 1604.3.3 — Safety Factor',      value: compliant ? '1.67' : 'EXCEEDED', req: 'Ω₀ ≤ 2.0', pass: compliant }
+      ];
+      rulesEl.innerHTML = rules.map(r => `<div class="ibc-rule ${r.pass ? 'pass' : 'fail'}">
+        <span class="ibc-check">${r.pass ? '✓' : '✗'}</span>
+        <span class="ibc-label">${r.label}</span>
+        <span class="ibc-val">${r.value}</span>
+        <span class="ibc-req">${r.req}</span>
+      </div>`).join('');
+      panel.classList.remove('hidden');
+      panel.setAttribute('aria-hidden', 'false');
+    }
+
+    function showHermesCard(h) {
+      const card = document.getElementById('hermes-card');
+      const pipelineEl = document.getElementById('hermes-pipeline');
+      const rationaleEl = document.getElementById('hermes-rationale');
+      if (!card || !pipelineEl) return;
+      const active = new Set(h.agents || ['QSSM', 'MMR', 'Council', 'Stripe']);
+      pipelineEl.innerHTML = ['QSSM', 'MMR', 'Council', 'Stripe'].map((a, i) =>
+        `${i > 0 ? '<span class="pipeline-arrow">→</span>' : ''}<span class="agent-chip ${active.has(a) ? 'active' : 'blocked'}">${a}</span>`
+      ).join('');
+      if (rationaleEl) rationaleEl.textContent = h.routingRationale || '';
+      card.classList.remove('hidden');
+      card.setAttribute('aria-hidden', 'false');
+    }
+
+    function showReceiptCard(payment, beamId) {
+      const card = document.getElementById('stripe-receipt');
+      const rowsEl = document.getElementById('receipt-rows');
+      if (!card || !rowsEl || !payment || payment.status !== 'succeeded') return;
+      const amt = ((payment.amount ?? 299) / 100).toFixed(2);
+      rowsEl.innerHTML = `
+        <div class="receipt-row"><span>Status</span><span class="receipt-ok">✓ ${payment.status}</span></div>
+        <div class="receipt-row"><span>Amount</span><span>$${amt}</span></div>
+        <div class="receipt-row"><span>Project</span><span>${beamId}</span></div>
+        <div class="receipt-row"><span>Mode</span><span class="tag">${payment.mock ? 'mock' : 'test'}</span></div>
+        ${payment.id ? `<div class="receipt-id">${payment.id}</div>` : ''}`;
+      card.classList.remove('hidden');
+      card.setAttribute('aria-hidden', 'false');
+    }
+
+    function animateGauge(harmony, color) {
+      const gaugeEl = document.getElementById('harmony-gauge');
+      const arcEl   = document.getElementById('gauge-arc');
+      const labelEl = document.getElementById('gauge-label');
+      if (!gaugeEl || !arcEl || !labelEl) return;
+      const r = 38, circ = 2 * Math.PI * r;
+      const score = Math.min(1, Math.max(0, parseFloat(harmony) || 0));
+      arcEl.style.stroke = color || 'var(--accent)';
+      arcEl.style.strokeDasharray = circ;
+      arcEl.style.strokeDashoffset = circ; // start empty
+      labelEl.textContent = harmony || '—';
+      gaugeEl.classList.remove('hidden');
+      gaugeEl.removeAttribute('aria-hidden');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        arcEl.style.strokeDashoffset = circ * (1 - score);
+      }));
+    }
+
+    function buildDebugPanel(data) {
+      const content = document.getElementById('debug-content');
+      if (!content) return;
+      const fmtBytes = b => b instanceof Uint8Array
+        ? '0x' + Array.from(b.slice(0, 16)).map(x => x.toString(16).padStart(2, '0')).join('') + '…'
+        : String(b);
+      let html = '';
+      if (data.proof) {
+        html += `<div class="debug-section">
+          <div class="debug-title">🔐 QSSM v1.1 Proof</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${data.proof.engine}</span></div>
+          <div class="debug-row"><span>Prove time</span><span>${data.proof.benchmarkMs} ms</span></div>
+          <div class="debug-row"><span>Proof size</span><span>${data.proof.proof?.length ?? 0} bytes</span></div>
+          <div class="debug-row"><span>Beam ID</span><span>${data.proof.publicInputs?.beamId ?? '—'}</span></div>
+          <div class="debug-row"><span>Compliance</span><span>${data.proof.publicInputs?.compliance ?? '—'}</span></div>
+          <div class="debug-code">${fmtBytes(data.proof.proof)}</div>
+        </div>`;
+      }
+      if (data.mmrRoot) {
+        html += `<div class="debug-section">
+          <div class="debug-title">🌲 Moloch MMR</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${data.mmrEngine ?? 'mock'}</span></div>
+          <div class="debug-code">${data.mmrRoot}</div>
+        </div>`;
+      }
+      if (data.hermes) {
+        const h = data.hermes;
+        html += `<div class="debug-section">
+          <div class="debug-title">🧠 Hermes Orchestration</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${h.mock ? 'mock' : 'NIM · Hermes-3'}</span></div>
+          <div class="debug-row"><span>Pipeline</span><span>${(h.agents || []).join(' → ')}</span></div>
+          <div class="debug-row"><span>Confidence</span><span>${h.confidence ? Math.round(h.confidence * 100) + '%' : '—'}</span></div>
+          <div class="debug-row"><span>Domain</span><span>${h.domain || '—'}</span></div>
+        </div>`;
+      }
+      if (data.decision) {
+        const d = data.decision;
+        html += `<div class="debug-section">
+          <div class="debug-title">🎨 Chromatic Council</div>
+          <div class="debug-row"><span>Engine</span><span class="tag">${d.engine ?? 'mock'}</span></div>
+          <div class="debug-row"><span>Rounds</span><span>${d.rounds}</span></div>
+          <div class="debug-row"><span>φ-Harmony</span><span>${d.harmony}</span></div>
+          <div class="debug-row"><span>Color</span><span><span class="swatch" style="background:${d.color}"></span> ${d.color}</span></div>
+          <div class="debug-label">Ember</div><div class="debug-quote">${d.emberRationale ?? '—'}</div>
+          <div class="debug-label">Umber</div><div class="debug-quote">${d.umberRationale ?? '—'}</div>
+          <div class="debug-label">Amber Synthesis</div><div class="debug-quote">${d.amberRationale ?? '—'}</div>
+        </div>`;
+      }
+      if (data.payment) {
+        const p = data.payment;
+        html += `<div class="debug-section">
+          <div class="debug-title">💳 Stripe PaymentIntent</div>
+          <div class="debug-row"><span>Status</span><span>${p.status}</span></div>
+          <div class="debug-row"><span>Mode</span><span class="tag">${p.mock ? 'mock' : 'test'}</span></div>
+          <div class="debug-row"><span>Amount</span><span>$${((p.amount ?? 299) / 100).toFixed(2)}</span></div>
+          ${p.id ? `<div class="debug-code">${p.id}</div>` : ''}
+        </div>`;
+      }
+      content.innerHTML = html;
+    }
+
+    // ── Keyboard shortcuts ──────────────────────────────────────────────────
+    const kbHelp = document.createElement('div');
+    kbHelp.id = 'kb-help';
+    kbHelp.innerHTML = `<div class="kb-inner">
+      <div class="kb-title">⌨️ Keyboard Shortcuts</div>
+      <div class="kb-row"><kbd>1</kbd> First Avenue &nbsp; <kbd>2</kbd> SF Retrofit &nbsp; <kbd>3</kbd> FAIL Case</div>
+      <div class="kb-row"><kbd>Enter</kbd> Run Demo &nbsp; <kbd>C</kbd> Compare All</div>
+      <div class="kb-row"><kbd>K</kbd> Toggle Kiosk Mode &nbsp; <kbd>Esc</kbd> Close</div>
+    </div>`;
+    kbHelp.style.cssText = 'display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;';
+    document.body.appendChild(kbHelp);
+
+    const style = document.createElement('style');
+    style.textContent = `.kb-inner{background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:1.5rem 2rem;text-align:center;}.kb-title{font-family:var(--mono);font-size:0.9rem;margin-bottom:1rem;color:var(--accent);letter-spacing:.08em;}.kb-row{font-family:var(--mono);font-size:0.78rem;margin:.4rem 0;opacity:.85;}kbd{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 7px;font-size:0.72rem;}`;
+    document.head.appendChild(style);
+
+    kbHelp.addEventListener('click', e => { if (e.target === kbHelp) kbHelp.style.display = 'none'; });
+
+    document.addEventListener('keydown', e => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === '1') document.querySelector('[data-scenario="firstave"]')?.click();
+      else if (e.key === '2') document.querySelector('[data-scenario="sf"]')?.click();
+      else if (e.key === '3') document.querySelector('[data-scenario="fail"]')?.click();
+      else if ((e.key === 'Enter' || e.key === ' ') && !isRunning) { e.preventDefault(); document.getElementById('run-demo')?.click(); }
+      else if ((e.key === 'c' || e.key === 'C') && !isRunning) document.getElementById('compare-btn')?.click();
+      else if (e.key === 'k' || e.key === 'K') toggleKiosk();
+      else if (e.key === '?' || e.key === '/') { kbHelp.style.display = 'flex'; }
+      else if (e.key === 'Escape') { kbHelp.style.display = 'none'; if (kioskTimer) stopKiosk(); }
+    });
+
+    // ── Kiosk / presentation auto-run mode ─────────────────────────────────
+    let kioskTimer = null;
+    let kioskIndex = 0;
+    const kioskScenarios = ['firstave', 'sf', 'fail'];
+
+    async function kioskStep() {
+      if (!kioskTimer) return;
+      const key = kioskScenarios[kioskIndex % kioskScenarios.length];
+      const card = document.querySelector(`[data-scenario="${key}"]`);
+      if (card) card.click();
+      await delay(600);
+      if (!kioskTimer) return;
+      document.getElementById('run-demo')?.click();
+      kioskIndex++;
+      // Wait for demo to finish (poll isRunning) then pause before next
+      await new Promise(resolve => {
+        const poll = setInterval(() => {
+          if (!isRunning) { clearInterval(poll); resolve(); }
+        }, 400);
+      });
+      if (kioskTimer) kioskTimer = setTimeout(kioskStep, 4000);
+    }
+
+    function toggleKiosk() {
+      if (kioskTimer) { stopKiosk(); } else { startKiosk(); }
+    }
+    function startKiosk() {
+      if (kioskTimer) return;
+      const badge = document.getElementById('kiosk-badge');
+      if (badge) badge.style.display = 'flex';
+      kioskTimer = setTimeout(kioskStep, 2000);
+      addStatus('🎬 Kiosk mode activated — press K or Esc to stop');
+    }
+    function stopKiosk() {
+      clearTimeout(kioskTimer);
+      kioskTimer = null;
+      const badge = document.getElementById('kiosk-badge');
+      if (badge) badge.style.display = 'none';
+      addStatus('⏹ Kiosk mode stopped');
+    }
+
+    // Auto-start kiosk if ?kiosk=1 in URL
+    if (new URLSearchParams(location.search).get('kiosk') === '1') {
+      setTimeout(startKiosk, 1500);
+    }
+
+    // ── Compare All Scenarios ───────────────────────────────────────────────
+    document.getElementById('compare-btn')?.addEventListener('click', async () => {
+      if (isRunning) return;
+      isRunning = true;
+      const btn = document.getElementById('compare-btn');
+      const tableEl = document.getElementById('comparison-table');
+      btn.disabled = true;
+      btn.textContent = '⏳ Comparing…';
+      tableEl.innerHTML = '<div class="comp-loading">Running all 3 scenarios in parallel…</div>';
+      tableEl.classList.remove('hidden');
+
+      const scenarios = [...document.querySelectorAll('.scenario-card')].map(c => ({
+        scenario: c.dataset.scenario, beamId: c.dataset.beamId, domain: c.dataset.domain,
+        forceFailure: c.dataset.fail === 'true', label: c.dataset.label, query: c.dataset.query
+      }));
+
+      const results = await Promise.all(scenarios.map(async s => {
+        const run = (async () => {
+          try {
+            const proof = await runQSSMDemo({ forceFailure: s.forceFailure, beamId: s.beamId, domain: s.domain });
+            const compliant = proof.publicInputs?.compliance === 'PASS';
+            const decision = await deliberateCouncil({ ...proof.publicInputs, beamId: s.beamId, domain: s.domain, label: s.label });
+            const councilProceed = decision.verdict.includes('proceed');
+            const pay = (compliant && councilProceed) ? await initiatePayment(decision.paymentAmount, s.beamId) : null;
+            return { label: s.label, compliant, harmony: decision.harmony, payment: pay?.status ?? 'BLOCKED' };
+          } catch (e) {
+            return { label: s.label, compliant: false, harmony: '—', payment: 'ERROR' };
+          }
+        })();
+        const timeout = new Promise(resolve =>
+          setTimeout(() => resolve({ label: s.label, compliant: null, harmony: '—', payment: 'TIMEOUT' }), 25000)
+        );
+        return Promise.race([run, timeout]);
+      }));
+
+      const pass = v => v === true ? '✅' : v === false ? '❌' : '⏱';
+      tableEl.innerHTML = `<table class="comp-table">
+        <thead><tr><th>Scenario</th><th>QSSM</th><th>φ-Harmony</th><th>Payment</th></tr></thead>
+        <tbody>${results.map(r => `<tr class="comp-row${r.compliant ? '' : ' fail-row'}">
+          <td>${r.label}</td><td>${pass(r.compliant)}</td><td>${r.harmony}</td><td>${r.payment}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+
+      btn.disabled = false;
+      btn.textContent = '⚖️ Compare All Scenarios';
+      isRunning = false;
+    });
+
+    // ── Main demo run ───────────────────────────────────────────────────────
+    document.getElementById('run-demo').addEventListener('click', async () => {
+      if (isRunning) return;
+      isRunning = true;
+      if (navigator.vibrate) navigator.vibrate(12);
+
+      const btn = document.getElementById('run-demo');
+      const proofCard = document.getElementById('proof-card');
+      const proofSeal = document.getElementById('proof-seal');
+      const proofStamp = document.getElementById('proof-stamp');
+      const debugPanel = document.getElementById('debug-panel');
+      const streamPreview = document.getElementById('stream-preview');
+      const streamTextEl = document.getElementById('stream-text');
+      const councilDeliberation = document.getElementById('council-deliberation');
+      const emberTextEl = document.getElementById('ember-text');
+      const umberTextEl = document.getElementById('umber-text');
+
+      // Reset UI
+      btn.disabled = true; btn.textContent = '⏳ Running...';
+      document.getElementById('status').innerHTML = '';
+      proofCard.classList.remove('show', 'fail');
+      proofSeal.textContent = '🛡️'; proofStamp.textContent = 'VERIFIED'; proofStamp.style.cssText = '';
+      document.getElementById('council-rationale').textContent = '';
+      councilDeliberation.classList.add('hidden');
+      emberTextEl.textContent = ''; umberTextEl.textContent = '';
+      streamPreview.classList.add('hidden'); streamTextEl.textContent = '';
+      document.getElementById('debug-content').innerHTML = '';
+      document.getElementById('compliance-panel')?.classList.add('hidden');
+      document.getElementById('hermes-card')?.classList.add('hidden');
+      document.getElementById('stripe-receipt')?.classList.add('hidden');
+      document.getElementById('cert-btn')?.classList.add('hidden');
+      document.body.classList.add('demo-live'); // choreography: intensify ambient motion
+      const _egPanel = document.getElementById('exec-graph-panel');
+      if (_egPanel) _egPanel.classList.add('hidden');
+      const _egContainer = document.getElementById('exec-graph');
+      if (_egContainer) _egContainer.innerHTML = '';
+      const _gaugeEl = document.getElementById('harmony-gauge');
+      if (_gaugeEl) { _gaugeEl.classList.add('hidden'); _gaugeEl.setAttribute('aria-hidden', 'true'); }
+      const _gaugeArc = document.getElementById('gauge-arc');
+      if (_gaugeArc) _gaugeArc.style.strokeDashoffset = String(2 * Math.PI * 38);
+      const _gaugeLbl = document.getElementById('gauge-label');
+      if (_gaugeLbl) _gaugeLbl.textContent = '—';
+      resetSteps();
+      addStatus(`🔄 Initializing Symbiosis Engine — ${activeScenario.label}…`);
+      activateStep(1);
+
+      // ── Canonical Intent ───────────────────────────────────────────────────
+      const intent = createIntent(activeScenario);
+
+      // ── Execution Graph setup ──────────────────────────────────────────────
+      const graph = new ExecutionGraph(intent.id);
+      const egPanel = document.getElementById('exec-graph-panel');
+      const egContainer = document.getElementById('exec-graph');
+      const egIntentEl = document.getElementById('eg-intent-id');
+      if (egPanel) egPanel.classList.remove('hidden');
+      if (egIntentEl) egIntentEl.textContent = intent.id;
+      graph.onChange(nodes => renderExecGraph(egContainer, nodes));
+
+      graph.addNode('qssm',    'QSSM ZK Proof',       'qssm');
+      graph.addNode('mmr',     'Moloch MMR',           'wasm');
+      graph.addNode('scugs',   'SCUGS Beam Viz',       'canvas');
+      graph.addNode('hermes',  'Hermes Orchestration', 'nvidia/hermes-3');
+      graph.addNode('council', 'Chromatic Council',    'nvidia/nemotron');
+      graph.addNode('stripe',  'Stripe Payment',       'stripe');
+      graph.addNode('esther',  'Esther Voice',         'web-speech');
+
+      const streamController = new AbortController();
+      const t0 = performance.now();
+
+      try {
+        // ── Step 2: QSSM ZK Proof ──────────────────────────────────────────
+        graph.start('qssm');
+        const proof = await runQSSMDemo({
+          forceFailure: activeScenario.forceFailure,
+          beamId: activeScenario.beamId,
+          domain: activeScenario.domain
+        });
+        const compliant = proof.publicInputs?.compliance === 'PASS';
+        const engineLabel = proof.engine === 'wasm' ? 'WASM' : 'mock';
+        addStatus(
+          `${compliant ? '✅' : '❌'} QSSM Proof: ${proof.publicInputs?.compliance} — ${proof.benchmarkMs}ms <span class="tag">${engineLabel}</span>`,
+          compliant ? '' : 'error'
+        );
+        setMetric('m-qssm', `${proof.benchmarkMs}ms · ${engineLabel}`);
+        document.getElementById('proof-details').innerHTML =
+          `Beam ${proof.publicInputs?.beamId} · ${proof.publicInputs?.compliance} · ${proof.benchmarkMs}ms · ${engineLabel}`;
+        if (!compliant) {
+          proofSeal.textContent = '⚠️';
+          proofCard.classList.add('fail');
+          proofStamp.textContent = 'FAILED';
+          proofStamp.style.color = 'var(--accent)';
+          proofStamp.style.borderColor = 'var(--accent)';
+        }
+        graph.complete('qssm', [proof.publicInputs?.compliance, `proof ${proof.benchmarkMs}ms`, 'RLWE n=1024']);
+        proofCard.classList.add('show');
+        showCompliancePanel(proof, activeScenario);
+        activateStep(2);
+
+        // ── Step 3: Moloch MMR ─────────────────────────────────────────────
+        graph.start('mmr');
+        const { root: mmrRoot, engine: mmrEngine } = await appendMMR(proof);
+        graph.complete('mmr', [`root ${mmrRoot.slice(0, 12)}…`]);
+        addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}… <span class="tag">${mmrEngine}</span>`);
+        setMetric('m-mmr', mmrRoot.slice(0, 10) + '…');
+        activateStep(3);
+
+        // ── Step 4: SCUGS / 3D Beam ───────────────────────────────────────
+        graph.start('scugs');
+        const yieldKsi    = activeScenario.forceFailure ? 28 : (activeScenario.domain === 'seismic' ? 50 : 40);
+        const modMsi      = activeScenario.forceFailure ? 20 : 29;
+        const requiredKsi = 36;
+        if (beamAvailable && isBeamReady()) {
+          setBeamColor(compliant);
+        } else {
+          renderSCUGS({ compliant, beamId: activeScenario.beamId, domain: activeScenario.domain, yieldKsi, requiredKsi });
+        }
+        graph.complete('scugs', [compliant ? 'within-tolerance' : 'violation-detected']);
+        addStatus(`✅ SCUGS Tier‑1 Render: ${compliant ? 'Active' : 'VIOLATION DETECTED'}`);
+        activateStep(4);
+
+        // ── Hermes orchestration ───────────────────────────────────────────
+        graph.start('hermes');
+        const hermesResult = await orchestrateHermes(
+          `Assess beam ${activeScenario.beamId} for ${activeScenario.label}. ${activeScenario.query}`,
+          { compliance: proof.publicInputs?.compliance, domain: activeScenario.domain, beamId: activeScenario.beamId }
+        );
+        graph.complete('hermes', hermesResult.agents || []);
+        addStatus(`🧠 Hermes: ${hermesResult.orchestration}`);
+        showHermesCard(hermesResult);
+
+        // ── NVIDIA SSE streaming — background, non-blocking ───────────────
+        debugPanel.open = true;
+        streamPreview.classList.remove('hidden');
+        let streamedText = '';
+        const streamStart = performance.now();
+        let streamTokens = 0;
+        const streamStatsEl = document.getElementById('stream-stats');
+        if (streamStatsEl) streamStatsEl.textContent = '';
+        fetch('http://localhost:3001/council-stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: activeScenario.query, compliance: proof.publicInputs?.compliance }),
+          signal: streamController.signal
+        }).then(async streamRes => {
+          if (!streamRes.ok || !streamRes.body) return;
+          const reader = streamRes.body.getReader();
+          const dec = new TextDecoder();
+          let buf = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop() || '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const raw = line.slice(6).trim();
+              if (raw === '[DONE]') return;
+              try {
+                const { token } = JSON.parse(raw);
+                if (token) {
+                  streamedText += token;
+                  streamTextEl.textContent = streamedText;
+                  streamTokens++;
+                  const ms = Math.round(performance.now() - streamStart);
+                  if (streamStatsEl) streamStatsEl.textContent = `⚡ ${streamTokens} tokens · ${ms}ms`;
+                }
+              } catch {}
+            }
+          }
+        }).catch(e => { if (e.name !== 'AbortError') console.warn('Council SSE:', e.message); });
+
+        // ── Step 5: Chromatic Council (critical path) ─────────────────────
+        graph.start('council');
+        const decision = await deliberateCouncil({
+          ...proof.publicInputs,
+          beamId: activeScenario.beamId, domain: activeScenario.domain, label: activeScenario.label
+        });
+
+        councilDeliberation.classList.remove('hidden');
+        await typewriteEl(emberTextEl, decision.emberRationale || 'Ember: Assessing beam parameters…', 8);
+        await delay(900);
+        await typewriteEl(umberTextEl, decision.umberRationale || 'Umber: Cross-checking risk factors…', 8);
+        await delay(800);
+        animateCouncil(decision);
+        animateGauge(decision.harmony, decision.color);
+
+        graph.complete('council', [decision.verdict, `φ=${decision.harmony}`]);
+        const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
+        addStatus(
+          `⚡ Council (Round ${decision.rounds}): ${decision.verdict} <span class="tag">${councilLabel}</span>`,
+          compliant ? '' : 'error'
+        );
+        addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span class="swatch" style="background:${decision.color};"></span>`);
+        setMetric('m-harmony', decision.harmony);
+        if (decision.preMortem) {
+          addStatus(`⚠️ Pre‑Mortem: ${decision.preMortem}`);
+          addStatus(`🔍 Check: ${decision.preMortemCheck}`);
+        }
+        activateStep(5);
+
+        // ── Step 6: Stripe Payment ─────────────────────────────────────────
+        graph.start('stripe');
+        const councilProceed = decision.verdict.includes('proceed');
+        let payment = null;
+
+        if (compliant && councilProceed) {
+          payment = await initiatePayment(decision.paymentAmount, activeScenario.beamId);
+          graph.complete('stripe', [payment.status, payment.id?.slice(0, 12) || 'mock']);
+          const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
+          addStatus(`💳 Payment: ${payLabel}`);
+          setMetric('m-stripe', payment.status);
+          showReceiptCard(payment, activeScenario.beamId);
+        } else {
+          graph.fail('stripe', 'blocked-compliance');
+          addStatus(`🚫 Payment blocked — compliance violation on ${activeScenario.beamId}`, 'error');
+          setMetric('m-stripe', 'BLOCKED');
+        }
+        activateStep(6);
+
+        // ── Step 7: Esther voice + completion ─────────────────────────────
+        graph.start('esther');
+        if (compliant && councilProceed) {
+          speakEsther(`Compliance seal complete. ${activeScenario.label} certified. Payment processed. Sovereign Dominion seal issued.`);
+          addStatus('🎤 Esther: Compliance seal confirmed');
+          graph.complete('esther', ['seal-confirmed']);
+        } else {
+          speakEsther(`Compliance failure on ${activeScenario.label}. Beam ${activeScenario.beamId} does not meet structural requirements. Human engineering review required immediately.`);
+          addStatus('🎤 Esther: Failure alert issued', 'error');
+          graph.complete('esther', ['failure-alert']);
+        }
+        activateStep(7);
+
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+        addStatus(`✨ <strong>Demo complete in ${elapsed}s — ${activeScenario.label}</strong>`);
+
+        // ── Certificate download button ────────────────────────────────────
+        const proofHex = Array.from((proof.proof || new Uint8Array(16)).slice(0, 16))
+          .map(x => x.toString(16).padStart(2, '0')).join('');
+        const certData = {
+          scenario: activeScenario.label,
+          beamId: activeScenario.beamId,
+          domain: activeScenario.domain,
+          compliance: proof.publicInputs?.compliance,
+          proofHex,
+          benchmarkMs: proof.benchmarkMs,
+          mmrRoot,
+          yieldKsi,
+          modMsi,
+          requiredKsi,
+          harmony: decision.harmony,
+          color: decision.color,
+          verdict: decision.verdict,
+          paymentId: payment?.id,
+          timestamp: Date.now()
+        };
+        const certBtn = document.getElementById('cert-btn');
+        if (certBtn) {
+          certBtn.classList.remove('hidden');
+          certBtn.onclick = () => downloadCertificate(certData);
+        }
+
+        buildDebugPanel({ proof, mmrRoot, mmrEngine, hermes: hermesResult, decision, payment });
+
+        if (payment?.status === 'succeeded' && compliant) {
+          if (navigator.vibrate) navigator.vibrate([10, 40, 20]);
+          launchConfetti();
+        }
+      } catch (e) {
+        addStatus(`❌ Error: ${e.message}`, 'error');
+        console.error(e);
+      } finally {
+        streamController.abort();
+        document.body.classList.remove('demo-live');
+        btn.disabled = false;
+        btn.textContent = '▶ RUN DEMO';
+        isRunning = false;
+      }
+    });
+
+    // ── Self-Healing runtime: invariant → rollback → recover ────────────────
+    const shEngine = new SelfHealingEngine();
+    const shRoot = document.getElementById('self-healing');
+    shEngine.onChange(e => renderSelfHealing(shRoot, e));
+    shEngine.commitStep();
+    shEngine.commitStep(); // seed a couple of verified-safe checkpoints
+    let shBusy = false;
+    document.getElementById('inject-fault')?.addEventListener('click', () => {
+      if (shBusy) return;
+      shBusy = true;
+      if (navigator.vibrate) navigator.vibrate([20, 60, 20]);
+      const panel = document.getElementById('self-healing-panel');
+      // 1. fault → invariant violation (red + shake)
+      shEngine.injectFault();
+      panel?.classList.add('sh-shake');
+      // 2. rollback (rewind sweep)
+      setTimeout(() => {
+        panel?.classList.remove('sh-shake');
+        panel?.classList.add('sh-rewind');
+        shEngine.rollback();
+      }, 750);
+      // 3. heal (green flash)
+      setTimeout(() => {
+        panel?.classList.remove('sh-rewind');
+        shEngine.heal();
+        shBusy = false;
+      }, 1500);
+    });
+
+    // ── Optional soundtrack toggle (user-supplied audio; never autoplays) ───
+    const musicBtn = document.getElementById('music-btn');
+    const track = document.getElementById('demo-track');
+    musicBtn?.addEventListener('click', async () => {
+      if (!track) return;
+      try {
+        if (track.paused) {
+          await track.play();
+          musicBtn.classList.add('playing');
+          musicBtn.textContent = '⏸';
+          document.body.classList.add('with-music');
+        } else {
+          track.pause();
+          musicBtn.classList.remove('playing');
+          musicBtn.textContent = '🎵';
+          document.body.classList.remove('with-music');
+        }
+      } catch {
+        musicBtn.title = 'No track found — add assets/dont-tell-your-dreams.mp3';
+        musicBtn.style.opacity = '0.4';
+      }
+    });
+
+    // Register Service Worker for offline caching
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+
+    // Populate capability health from backend (best-effort)
+    refreshHealth();
+  </script>
+</body>
+</html>

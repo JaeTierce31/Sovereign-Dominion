@@ -1,0 +1,11 @@
+name = "sovereign-solar-proxy"
+main = "solarProxy.js"
+compatibility_date = "2024-01-01"
+account_id = "53528ec5aa0c18c03cb6fddc2ad38af1"
+
+[[kv_namespaces]]
+binding = "SOLAR_CACHE"
+id = "faa67f568b7c4a4cb5d1e08354053ca0"
+
+# Secret required: GOOGLE_SOLAR_KEY
+# Set via: wrangler secret put GOOGLE_SOLAR_KEY

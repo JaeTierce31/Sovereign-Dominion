@@ -1,0 +1,12 @@
+{
+  "name": "sd-hackathon-demo",
+  "version": "1.0.0",
+  "description": "Sovereign Dominion Hackathon Demo — Nous Research × NVIDIA × Stripe",
+  "scripts": {
+    "start": "npx http-server . -p 8080 --cors -c-1",
+    "backend": "node server/index.js"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

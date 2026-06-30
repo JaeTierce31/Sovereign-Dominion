@@ -22,7 +22,7 @@ export function updateDepthTexture(frame: LidarFrame) {
   }
   device.queue.writeTexture(
     { texture: depthTexture },
-    frame.depthMap,
+    frame.depthMap as unknown as ArrayBuffer,
     { bytesPerRow: frame.width * 4, rowsPerImage: frame.height },
     [frame.width, frame.height, 1]
   );

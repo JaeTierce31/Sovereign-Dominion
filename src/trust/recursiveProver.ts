@@ -1,7 +1,7 @@
 export interface RecursiveProof {
   depth: number;
-  root: Uint8Array;
-  proof: Uint8Array;
+  root: Uint8Array<ArrayBuffer>;
+  proof: Uint8Array<ArrayBuffer>;
 }
 
 export async function buildRecursiveProof(
