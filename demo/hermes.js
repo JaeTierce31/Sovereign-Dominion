@@ -2,9 +2,10 @@
 // Returns a structured routing plan with agent pipeline, confidence, and rationale.
 
 export async function orchestrateHermes(query, scenario = {}) {
+  let timeout;
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch('http://localhost:3001/hermes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

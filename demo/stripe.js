@@ -3,9 +3,10 @@
 
 export async function initiatePayment(amount, projectId) {
   // Try real backend first
+  let timeout;
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    timeout = setTimeout(() => controller.abort(), 3000);
     const res = await fetch('http://localhost:3001/payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
