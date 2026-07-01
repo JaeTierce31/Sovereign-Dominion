@@ -67,9 +67,12 @@
 
   <div id="app">
     <header>
-      <img class="crest" src="./logo.png" width="72" height="72" alt="Sovereign Dominion crest" decoding="async">
+      <div class="crest-seal" id="crest-seal">
+        <img class="crest" src="./logo.png" width="88" height="88" alt="Sovereign Dominion crest" decoding="async">
+      </div>
       <h1 class="wordmark">SOVEREIGN&nbsp;DOMINION</h1>
       <p class="tagline">Your word, built — governed by the laws of mathematics.</p>
+      <div class="rule-gold" aria-hidden="true"></div>
     </header>
 
     <!-- Sponsor attribution bar -->
@@ -284,6 +287,7 @@
     import { ExecutionGraph, renderExecGraph } from './exec-graph.js';
     import { refreshHealth } from './capability-registry.js';
     import { SelfHealingEngine, renderSelfHealing } from './self-healing.js';
+    import { initSealRing, resetSeal, setSealStep, sealComplete } from './seal-ring.js';
 
     let isRunning = false;
     let beamAvailable = false;
@@ -400,11 +404,18 @@
     // Inline SVG icon string for dynamic markup (status log, buttons, tables).
     const icon = (n, extra = '') => `<svg class="ic ${extra}"><use href="#i-${n}"></use></svg>`;
 
+    // The crest is the instrument — light its seal ring as each stage fires.
+    initSealRing(document.getElementById('crest-seal'));
+
     function activateStep(n) {
       const el = document.querySelector(`.step[data-step="${n}"]`);
       if (el) el.classList.add('active');
+      setSealStep(n);
     }
-    function resetSteps() { document.querySelectorAll('.step').forEach(s => s.classList.remove('active')); }
+    function resetSteps() {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      resetSeal();
+    }
 
     function addStatus(text, cls = '') {
       const status = document.getElementById('status');
@@ -920,6 +931,7 @@
           graph.complete('esther', ['failure-alert']);
         }
         activateStep(7);
+        sealComplete(compliant && councilProceed);   // fuse the seal (or break it)
 
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
         addStatus(`${icon('sparkle', 'ic-ok')} <strong>Demo complete in ${elapsed}s — ${activeScenario.label}</strong>`);
