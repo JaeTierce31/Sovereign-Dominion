@@ -1,0 +1,15 @@
+{
+  "name": "@sovereign/kernel",
+  "version": "0.1.0",
+  "description": "Domain-agnostic verification kernel: Intent → Gate → Verify → Execute → Observe → Seal. Shared by Sovereign Dominion (AEC) and Sovereign Dignity (HMIS).",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "node test/kernel.test.mjs"
+  },
+  "license": "MIT"
+}
