@@ -1,10 +1,17 @@
 # @sovereign/kernel
 
 The domain-agnostic verification kernel shared by **Sovereign Dominion** (AEC /
-structural compliance) and **Sovereign Dignity** (HMIS / homeless services). This
-is the "one shared kernel" from [`docs/UNIFICATION.md`](../docs/UNIFICATION.md) —
-extracted, pure, and framework-neutral (no DOM, no backend, runs in Node and the
-browser).
+structural compliance) and **Sovereign Dignity** (Housing / HUD NSPIRE physical
+inspection). This is the "one shared kernel" from
+[`docs/UNIFICATION.md`](../docs/UNIFICATION.md) — extracted, pure, and
+framework-neutral (no DOM, no backend, runs in Node and the browser).
+
+> An earlier draft of `docs/UNIFICATION.md` (and, briefly, this package)
+> assumed `Sovereign-Dignity` was a homeless-services HMIS. That guess was made
+> before the repo could be reviewed and turned out to be wrong — it's a HUD
+> NSPIRE housing-inspection platform instead. The mechanism below (the loop,
+> the gate, the seal) didn't need to change; only the domain-flavored examples
+> did.
 
 ## The loop
 
@@ -15,7 +22,7 @@ submitIntent → GATE (Constitution) → VERIFY (proofs) → EXECUTE (domain han
              → OBSERVE (append to audit) → SEAL
 ```
 
-Nothing bypasses the gate. AEC and HMIS differ only in the *handlers* and
+Nothing bypasses the gate. AEC and Housing differ only in the *handlers* and
 *invariants* they register — the engine is identical. That is the merge.
 
 ## Modules
@@ -38,16 +45,16 @@ import { Constitution, defineInvariant, CapabilityRegistry, AuditLog, createKern
 
 const constitution = new Constitution([
   defineInvariant({
-    id: 'consent.expiry',
-    appliesWhen: ({ intent }) => intent.action === 'enrollment.share',
-    mustHold:   ({ intent, now }) => intent.subject.consent.status === 'active' && now() < intent.subject.consent.expiresAt,
+    id: 'inspector.credential_valid',
+    appliesWhen: ({ intent }) => intent.action === 'inspection.submit_evidence',
+    mustHold:   ({ intent, now }) => intent.actor.credential.status === 'active' && now() < intent.actor.credential.expiresAt,
     onViolation: 'block',
   }),
 ]);
 
 const registry = new CapabilityRegistry().register({
-  domain: 'hmis',
-  actions: [{ name: 'enrollment.share', handler: (intent) => shareEnrollment(intent) }],
+  domain: 'housing',
+  actions: [{ name: 'inspection.submit_evidence', handler: (intent) => submitEvidence(intent) }],
 });
 
 const kernel = createKernel({ constitution, registry, audit: new AuditLog() });
@@ -55,9 +62,9 @@ const result = await kernel.submitIntent(createIntent({ /* actor, subject, actio
 // → { status: 'sealed' | 'blocked' | 'proof_failed' | 'no_handler' | 'error', … }
 ```
 
-See `test/kernel.test.mjs` for a runnable end-to-end example (valid share sealed,
-expired-consent share blocked, AI-only eligibility blocked, audit tamper detected,
-self-healing rewind).
+See `test/kernel.test.mjs` for a runnable end-to-end example (valid evidence
+submission sealed, expired-credential submission blocked, single-attestation
+finalize blocked, audit tamper detected, self-healing rewind).
 
 ```bash
 npm test   # or: node test/kernel.test.mjs
@@ -74,8 +81,9 @@ mocks with clear swap points:
 2. **`audit.js` / `hash.js`** → bind to the real Moloch MMR (`core/moloch-mmr`) for
    production roots.
 3. **`invariant.js`** → invariants are compiled predicate functions today; the
-   human-authored charter lives in [`constitution/`](../constitution/). A
-   charter → predicate compiler is the remaining seam.
+   human-authored charter lives in [`constitution/`](../constitution/) —
+   currently `charter.housing-inspection.example.yaml`. A charter → predicate
+   compiler is the remaining seam.
 
-The HMIS domain (`/domain-hmis`) is authored next session against the actual
-`Sovereign-Dignity` repo; it registers HUD-conformant actions + the full charter here.
+The Housing domain (`/domain-housing`) is authored against the actual
+`Sovereign-Dignity` repo; it registers NSPIRE-conformant actions + the full charter here.

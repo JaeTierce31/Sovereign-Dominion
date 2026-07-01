@@ -1,7 +1,7 @@
 // The Seal — a portable, subject-held credential attesting a verified claim,
 // carrying a proof reference and the audit root it was minted against, but NOT
-// the underlying private data. For HMIS this is the client-held proof of status
-// they carry between agencies and control.
+// the underlying private data. For Housing (NSPIRE) this is the inspector- or
+// owner-held proof that a unit's inspection evidence was verified and sealed.
 //
 // Skeleton signature is a mock hash. Production signs with the issuer key and,
 // for selective disclosure, wraps a real proof (QSSM / BBS+ / SNARK).
@@ -13,7 +13,7 @@ let _seq = 0;
 /**
  * @param {object} spec
  * @param {object} spec.subject   who the seal is about (opaque ref, no PII required)
- * @param {object} spec.claims    the attested facts (e.g. { status: "chronic_homeless" })
+ * @param {object} spec.claims    the attested facts (e.g. { unitId, deficiencyCount: 0 })
  * @param {object} [spec.proof]   proof object from proof.js (holds === true)
  * @param {string} [spec.auditRoot]  MMR/audit root at issuance
  * @param {string} [spec.issuer]

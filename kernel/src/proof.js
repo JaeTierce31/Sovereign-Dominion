@@ -9,7 +9,7 @@ import { hash } from './hash.js';
 /**
  * Produce a proof that `predicateId` holds for a private `witness`.
  * The returned object carries NO witness fields — only a commitment + verdict.
- * @param {string} predicateId  e.g. "eligibility.chronic_homeless_ge_12mo"
+ * @param {string} predicateId  e.g. "evidence.hash_matches_capture"
  * @param {(w:object)=>boolean} evaluate  the predicate, run privately here
  * @param {object} witness  private inputs — never leave this function in the clear
  */

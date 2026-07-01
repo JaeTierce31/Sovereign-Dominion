@@ -13,7 +13,7 @@ do on violation:
 - `block` — the Intent is refused before it executes.
 - `rollback` — a post-condition drifted; the self-healing runtime rewinds to the last
   verified-safe state (the same mechanism as the demo's self-healing panel, generalized
-  in `src/kernel/selfHealing.ts`).
+  in `kernel/src/self-healing.js`).
 
 Invariants compose: a base charter applies platform-wide; each domain registers
 additional invariants at boot (`CapabilityRegistration.invariants`).
