@@ -21,23 +21,60 @@
   </script>
 </head>
 <body>
+  <!-- ===== Inline SVG icon sprite — monochrome line glyphs, colored via currentColor.
+       Reference anywhere with <svg class="ic"><use href="#i-name"></use></svg> ===== -->
+  <svg id="icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-emblem" viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 4.5 3.2 7.8 8 9.5 4.8-1.7 8-5 8-9.5V6l-8-3Z"/><path d="M8.5 12.5 12 9l3.5 3.5"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></symbol>
+      <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15.5h4"/></symbol>
+      <symbol id="i-network" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><circle cx="5" cy="16" r="2"/><circle cx="19" cy="16" r="2"/><path d="M10.6 6.2 6.4 14M13.4 6.2 17.6 14M7 16h10"/></symbol>
+      <symbol id="i-tower" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/><path d="M9.5 7h1M13.5 7h1M9.5 11h1M13.5 11h1M9.5 15h1M13.5 15h1M10 21v-3h4v3"/></symbol>
+      <symbol id="i-bridge" viewBox="0 0 24 24"><path d="M3 18h18"/><path d="M7 18V5M17 18V5"/><path d="M7 5c0 5 10 5 10 0"/><path d="M3 18c0-5 4-6 4-6M21 18c0-5-4-6-4-6"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 22 20H2L12 4Z"/><path d="M12 10v5M12 17.5h.01"/></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 4.5 3.2 7.8 8 9.5 4.8-1.7 8-5 8-9.5V6l-8-3Z"/><path d="M8.5 11.5 11 14l4.5-4.5"/></symbol>
+      <symbol id="i-merkle" viewBox="0 0 24 24"><circle cx="12" cy="4" r="1.7"/><circle cx="6" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/><circle cx="6" cy="20" r="1.7"/><circle cx="18" cy="20" r="1.7"/><path d="M10.7 5.2 7.3 10.8M13.3 5.2 16.7 10.8M6 13.7v4.6M18 13.7v4.6"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5 11 15.5 16.5 9"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5 19 12 7 19Z"/></symbol>
+      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 9.5h.01M9.5 9.5h.01M13 9.5h.01M16.5 9.5h.01M6 13h.01M18 13h.01M9 15.5h6"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="3" rx="1"/><path d="M8.5 13 11 15.5 15.5 10.5"/></symbol>
+      <symbol id="i-document" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 16.5h4"/></symbol>
+      <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M12 6 5 8M12 6l7 2"/><path d="M2.5 13 5 8l2.5 5a2.5 2.5 0 0 1-5 0ZM16.5 13 19 8l2.5 5a2.5 2.5 0 0 1-5 0Z"/></symbol>
+      <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3v6l-4.5 8A2 2 0 0 0 6.3 20h11.4a2 2 0 0 0 1.8-3l-4.5-8V3"/><path d="M8 3h8M7.5 14h9"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></symbol>
+      <symbol id="i-block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6 18.4 18.4"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+      <symbol id="i-check2" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 6.5"/></symbol>
+      <symbol id="i-x2" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    </defs>
+  </svg>
+
   <!-- Splash screen -->
   <div id="splash">
-    <div class="splash-logo">🦅</div>
+    <div class="splash-logo"><svg class="ic"><use href="#i-emblem"></use></svg></div>
     <p class="splash-text">Symbiosis Engine Initializing…</p>
   </div>
 
   <div id="app">
     <header>
-      <h1>🦅 SOVEREIGN DOMINION</h1>
+      <h1><svg class="ic ic-logo"><use href="#i-emblem"></use></svg> SOVEREIGN DOMINION</h1>
       <p class="tagline">Your word, built. Governed by the laws of mathematics.</p>
     </header>
 
     <!-- Sponsor attribution bar -->
     <div class="sponsor-bar">
-      <span class="sponsor-badge nvidia" title="Nemotron-4 Council + Hermes-3 Orchestration">⚡ NVIDIA NIM</span>
-      <span class="sponsor-badge stripe" title="Stripe PaymentIntents API">💳 Stripe</span>
-      <span class="sponsor-badge nous" title="Hermes-3-405B Orchestrator">🧠 Nous Research</span>
+      <span class="sponsor-badge nvidia" title="Nemotron-4 Council + Hermes-3 Orchestration"><svg class="ic"><use href="#i-bolt"></use></svg> NVIDIA NIM</span>
+      <span class="sponsor-badge stripe" title="Stripe PaymentIntents API"><svg class="ic"><use href="#i-card"></use></svg> Stripe</span>
+      <span class="sponsor-badge nous" title="Hermes-3-405B Orchestrator"><svg class="ic"><use href="#i-network"></use></svg> Nous Research</span>
     </div>
 
     <!-- Live metrics strip -->
@@ -64,7 +101,7 @@
               data-beam-id="B-001" data-domain="structural" data-fail="false"
               data-label="First Avenue"
               data-query="Assess structural beam B-001 for the First Avenue high-rise, Minneapolis MN. Yield 40 ksi, elastic modulus 29 Msi — full IBC 1604 compliance.">
-            <span class="sc-icon">🏗️</span>
+            <span class="sc-icon"><svg class="ic"><use href="#i-tower"></use></svg></span>
             <span class="sc-name">First Avenue</span>
             <span class="sc-badge pass">PASS</span>
           </button>
@@ -72,7 +109,7 @@
               data-beam-id="B-002" data-domain="seismic" data-fail="false"
               data-label="SF Retrofit"
               data-query="Assess seismic retrofit beam B-002 for San Francisco Bay Bridge. Zone 4 seismic, yield 50 ksi, AISC 360 compliant.">
-            <span class="sc-icon">🌉</span>
+            <span class="sc-icon"><svg class="ic"><use href="#i-bridge"></use></svg></span>
             <span class="sc-name">SF Retrofit</span>
             <span class="sc-badge pass">PASS</span>
           </button>
@@ -80,7 +117,7 @@
               data-beam-id="B-FAIL" data-domain="structural" data-fail="true"
               data-label="FAIL Case"
               data-query="Assess non-compliant beam B-FAIL. Yield 28 ksi — fails IBC 1604 minimum 36 ksi. Elastic modulus 20 Msi — fails 29 Msi threshold.">
-            <span class="sc-icon">⚠️</span>
+            <span class="sc-icon"><svg class="ic"><use href="#i-alert"></use></svg></span>
             <span class="sc-name">FAIL Case</span>
             <span class="sc-badge fail">NON-COMPLIANT</span>
           </button>
@@ -88,23 +125,23 @@
 
         <!-- Pipeline step indicator -->
         <div id="steps" aria-hidden="true">
-          <span class="step" data-step="1" title="Voice intake">🎤</span>
-          <span class="step" data-step="2" title="QSSM proof">🔐</span>
-          <span class="step" data-step="3" title="Moloch MMR">🌲</span>
-          <span class="step" data-step="4" title="SCUGS render">👁️</span>
-          <span class="step" data-step="5" title="Chromatic Council">🧠</span>
-          <span class="step" data-step="6" title="Stripe payment">💳</span>
-          <span class="step" data-step="7" title="Sealed">✅</span>
+          <span class="step" data-step="1" title="Voice intake"><svg class="ic"><use href="#i-mic"></use></svg></span>
+          <span class="step" data-step="2" title="QSSM proof"><svg class="ic"><use href="#i-shield"></use></svg></span>
+          <span class="step" data-step="3" title="Moloch MMR"><svg class="ic"><use href="#i-merkle"></use></svg></span>
+          <span class="step" data-step="4" title="SCUGS render"><svg class="ic"><use href="#i-eye"></use></svg></span>
+          <span class="step" data-step="5" title="Chromatic Council"><svg class="ic"><use href="#i-chip"></use></svg></span>
+          <span class="step" data-step="6" title="Stripe payment"><svg class="ic"><use href="#i-card"></use></svg></span>
+          <span class="step" data-step="7" title="Sealed"><svg class="ic"><use href="#i-check"></use></svg></span>
         </div>
 
         <!-- Voice + run button row -->
         <div class="run-row">
           <button id="voice-btn" class="voice-btn"
               aria-label="Voice input — speak to select scenario"
-              title="Say: First Avenue, SF Retrofit, or Fail Case">🎤</button>
-          <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo">▶ RUN DEMO</button>
-          <button id="music-btn" class="voice-btn" aria-label="Toggle soundtrack" title="Toggle soundtrack">🎵</button>
-          <button class="voice-btn" style="font-size:0.75rem;padding:0 10px;opacity:0.55;" onclick="document.getElementById('kb-help').style.display='flex'" title="Keyboard shortcuts">⌨️</button>
+              title="Say: First Avenue, SF Retrofit, or Fail Case"><svg class="ic"><use href="#i-mic"></use></svg></button>
+          <button id="run-demo" class="chromatic" aria-label="Run full end-to-end demo"><svg class="ic ic-fill"><use href="#i-play"></use></svg> RUN DEMO</button>
+          <button id="music-btn" class="voice-btn" aria-label="Toggle soundtrack" title="Toggle soundtrack"><svg class="ic"><use href="#i-music"></use></svg></button>
+          <button class="voice-btn" style="padding:0 12px;opacity:0.55;" onclick="document.getElementById('kb-help').style.display='flex'" title="Keyboard shortcuts"><svg class="ic"><use href="#i-keyboard"></use></svg></button>
         </div>
         <!-- Optional soundtrack — user-supplied, never autoplays. See assets/README.md -->
         <audio id="demo-track" loop preload="none">
@@ -119,7 +156,7 @@
 
         <!-- QSSM proof certificate -->
         <div id="proof-card" class="proof-card" aria-hidden="true">
-          <div class="proof-seal" id="proof-seal">🛡️</div>
+          <div class="proof-seal" id="proof-seal"><svg class="ic"><use href="#i-shield"></use></svg></div>
           <div class="proof-title">QSSM v1.1 Compliance Proof</div>
           <div class="proof-details" id="proof-details"></div>
           <div class="proof-stamp" id="proof-stamp">VERIFIED</div>
@@ -127,7 +164,7 @@
 
         <!-- IBC Compliance explanation panel -->
         <div id="compliance-panel" class="compliance-panel hidden" aria-hidden="true">
-          <div class="compliance-title">📋 IBC 1604 Structural Assessment</div>
+          <div class="compliance-title"><svg class="ic"><use href="#i-clipboard"></use></svg> IBC 1604 Structural Assessment</div>
           <div id="compliance-rules" class="compliance-rules"></div>
         </div>
 
@@ -163,21 +200,21 @@
 
         <!-- Hermes routing card -->
         <div id="hermes-card" class="hermes-card hidden" aria-hidden="true">
-          <div class="hermes-header">🧠 Hermes Orchestration</div>
+          <div class="hermes-header"><svg class="ic"><use href="#i-network"></use></svg> Hermes Orchestration</div>
           <div id="hermes-pipeline" class="hermes-pipeline"></div>
           <div id="hermes-rationale" class="hermes-rationale"></div>
         </div>
 
         <!-- Stripe receipt card -->
         <div id="stripe-receipt" class="stripe-receipt hidden" aria-hidden="true">
-          <div class="receipt-header">💳 Payment Receipt</div>
+          <div class="receipt-header"><svg class="ic"><use href="#i-card"></use></svg> Payment Receipt</div>
           <div id="receipt-rows" class="receipt-rows"></div>
         </div>
 
         <!-- Certificate download (shown after run completes) -->
         <div class="cert-btn-wrap">
           <button id="cert-btn" class="cert-btn hidden" aria-label="Download compliance certificate as PNG">
-            📄 Download Certificate
+            <svg class="ic"><use href="#i-document"></use></svg> Download Certificate
           </button>
         </div>
 
@@ -194,7 +231,7 @@
         <div id="self-healing-panel" class="self-healing-panel">
           <div class="sh-header">
             <span class="sh-title">Self-Healing Runtime</span>
-            <button id="inject-fault" class="sh-fault-btn" title="Corrupt the beam below IBC minimum">⚡ Inject Fault</button>
+            <button id="inject-fault" class="sh-fault-btn" title="Corrupt the beam below IBC minimum"><svg class="ic"><use href="#i-bolt"></use></svg> Inject Fault</button>
           </div>
           <div id="self-healing" class="self-healing sh-state-safe"></div>
         </div>
@@ -202,12 +239,12 @@
         <div id="status" class="status-panel" role="region" aria-live="polite" aria-label="Demo status"></div>
 
         <!-- Compare all scenarios -->
-        <button id="compare-btn" class="compare-btn">⚖️ Compare All Scenarios</button>
+        <button id="compare-btn" class="compare-btn"><svg class="ic"><use href="#i-scale"></use></svg> Compare All Scenarios</button>
         <div id="comparison-table" class="comparison-table hidden"></div>
 
         <!-- Technical Deep Dive — NVIDIA SSE stream + post-run debug data -->
         <details id="debug-panel" class="debug-panel">
-          <summary>🔬 Technical Deep Dive</summary>
+          <summary><svg class="ic"><use href="#i-flask"></use></svg> Technical Deep Dive</summary>
           <div id="stream-preview" class="stream-preview hidden">
             <div class="stream-header">NVIDIA NIM Streaming — Live Council Deliberation
               <span id="stream-stats" style="float:right;font-size:0.58rem;opacity:0.6;letter-spacing:.04em;"></span>
@@ -358,6 +395,9 @@
     // ── Helpers ─────────────────────────────────────────────────────────────
     const delay = ms => new Promise(r => setTimeout(r, ms));
 
+    // Inline SVG icon string for dynamic markup (status log, buttons, tables).
+    const icon = (n, extra = '') => `<svg class="ic ${extra}"><use href="#i-${n}"></use></svg>`;
+
     function activateStep(n) {
       const el = document.querySelector(`.step[data-step="${n}"]`);
       if (el) el.classList.add('active');
@@ -404,7 +444,7 @@
         { label: 'IBC 1604.3.3 — Safety Factor',      value: compliant ? '1.67' : 'EXCEEDED', req: 'Ω₀ ≤ 2.0', pass: compliant }
       ];
       rulesEl.innerHTML = rules.map(r => `<div class="ibc-rule ${r.pass ? 'pass' : 'fail'}">
-        <span class="ibc-check">${r.pass ? '✓' : '✗'}</span>
+        <span class="ibc-check">${r.pass ? icon('check2', 'ic-ok') : icon('x2', 'ic-bad')}</span>
         <span class="ibc-label">${r.label}</span>
         <span class="ibc-val">${r.value}</span>
         <span class="ibc-req">${r.req}</span>
@@ -433,7 +473,7 @@
       if (!card || !rowsEl || !payment || payment.status !== 'succeeded') return;
       const amt = ((payment.amount ?? 299) / 100).toFixed(2);
       rowsEl.innerHTML = `
-        <div class="receipt-row"><span>Status</span><span class="receipt-ok">✓ ${payment.status}</span></div>
+        <div class="receipt-row"><span>Status</span><span class="receipt-ok">${icon('check2', 'ic-ok')} ${payment.status}</span></div>
         <div class="receipt-row"><span>Amount</span><span>$${amt}</span></div>
         <div class="receipt-row"><span>Project</span><span>${beamId}</span></div>
         <div class="receipt-row"><span>Mode</span><span class="tag">${payment.mock ? 'mock' : 'test'}</span></div>
@@ -469,7 +509,7 @@
       let html = '';
       if (data.proof) {
         html += `<div class="debug-section">
-          <div class="debug-title">🔐 QSSM v1.1 Proof</div>
+          <div class="debug-title">${icon('shield')} QSSM v1.1 Proof</div>
           <div class="debug-row"><span>Engine</span><span class="tag">${data.proof.engine}</span></div>
           <div class="debug-row"><span>Prove time</span><span>${data.proof.benchmarkMs} ms</span></div>
           <div class="debug-row"><span>Proof size</span><span>${data.proof.proof?.length ?? 0} bytes</span></div>
@@ -480,7 +520,7 @@
       }
       if (data.mmrRoot) {
         html += `<div class="debug-section">
-          <div class="debug-title">🌲 Moloch MMR</div>
+          <div class="debug-title">${icon('merkle')} Moloch MMR</div>
           <div class="debug-row"><span>Engine</span><span class="tag">${data.mmrEngine ?? 'mock'}</span></div>
           <div class="debug-code">${data.mmrRoot}</div>
         </div>`;
@@ -488,7 +528,7 @@
       if (data.hermes) {
         const h = data.hermes;
         html += `<div class="debug-section">
-          <div class="debug-title">🧠 Hermes Orchestration</div>
+          <div class="debug-title">${icon('network')} Hermes Orchestration</div>
           <div class="debug-row"><span>Engine</span><span class="tag">${h.mock ? 'mock' : 'NIM · Hermes-3'}</span></div>
           <div class="debug-row"><span>Pipeline</span><span>${(h.agents || []).join(' → ')}</span></div>
           <div class="debug-row"><span>Confidence</span><span>${h.confidence ? Math.round(h.confidence * 100) + '%' : '—'}</span></div>
@@ -498,7 +538,7 @@
       if (data.decision) {
         const d = data.decision;
         html += `<div class="debug-section">
-          <div class="debug-title">🎨 Chromatic Council</div>
+          <div class="debug-title">${icon('chip')} Chromatic Council</div>
           <div class="debug-row"><span>Engine</span><span class="tag">${d.engine ?? 'mock'}</span></div>
           <div class="debug-row"><span>Rounds</span><span>${d.rounds}</span></div>
           <div class="debug-row"><span>φ-Harmony</span><span>${d.harmony}</span></div>
@@ -511,7 +551,7 @@
       if (data.payment) {
         const p = data.payment;
         html += `<div class="debug-section">
-          <div class="debug-title">💳 Stripe PaymentIntent</div>
+          <div class="debug-title">${icon('card')} Stripe PaymentIntent</div>
           <div class="debug-row"><span>Status</span><span>${p.status}</span></div>
           <div class="debug-row"><span>Mode</span><span class="tag">${p.mock ? 'mock' : 'test'}</span></div>
           <div class="debug-row"><span>Amount</span><span>$${((p.amount ?? 299) / 100).toFixed(2)}</span></div>
@@ -525,7 +565,7 @@
     const kbHelp = document.createElement('div');
     kbHelp.id = 'kb-help';
     kbHelp.innerHTML = `<div class="kb-inner">
-      <div class="kb-title">⌨️ Keyboard Shortcuts</div>
+      <div class="kb-title"><svg class="ic"><use href="#i-keyboard"></use></svg> Keyboard Shortcuts</div>
       <div class="kb-row"><kbd>1</kbd> First Avenue &nbsp; <kbd>2</kbd> SF Retrofit &nbsp; <kbd>3</kbd> FAIL Case</div>
       <div class="kb-row"><kbd>Enter</kbd> Run Demo &nbsp; <kbd>C</kbd> Compare All</div>
       <div class="kb-row"><kbd>K</kbd> Toggle Kiosk Mode &nbsp; <kbd>Esc</kbd> Close</div>
@@ -583,14 +623,14 @@
       const badge = document.getElementById('kiosk-badge');
       if (badge) badge.style.display = 'flex';
       kioskTimer = setTimeout(kioskStep, 2000);
-      addStatus('🎬 Kiosk mode activated — press K or Esc to stop');
+      addStatus(`${icon('play', 'ic-fill')} Kiosk mode activated — press K or Esc to stop`);
     }
     function stopKiosk() {
       clearTimeout(kioskTimer);
       kioskTimer = null;
       const badge = document.getElementById('kiosk-badge');
       if (badge) badge.style.display = 'none';
-      addStatus('⏹ Kiosk mode stopped');
+      addStatus(`${icon('stop')} Kiosk mode stopped`);
     }
 
     // Auto-start kiosk if ?kiosk=1 in URL
@@ -605,7 +645,7 @@
       const btn = document.getElementById('compare-btn');
       const tableEl = document.getElementById('comparison-table');
       btn.disabled = true;
-      btn.textContent = '⏳ Comparing…';
+      btn.innerHTML = icon('refresh', 'ic-spin') + ' Comparing…';
       tableEl.innerHTML = '<div class="comp-loading">Running all 3 scenarios in parallel…</div>';
       tableEl.classList.remove('hidden');
 
@@ -633,7 +673,7 @@
         return Promise.race([run, timeout]);
       }));
 
-      const pass = v => v === true ? '✅' : v === false ? '❌' : '⏱';
+      const pass = v => v === true ? icon('check', 'ic-ok') : v === false ? icon('x', 'ic-bad') : icon('clock');
       tableEl.innerHTML = `<table class="comp-table">
         <thead><tr><th>Scenario</th><th>QSSM</th><th>φ-Harmony</th><th>Payment</th></tr></thead>
         <tbody>${results.map(r => `<tr class="comp-row${r.compliant ? '' : ' fail-row'}">
@@ -642,7 +682,7 @@
       </table>`;
 
       btn.disabled = false;
-      btn.textContent = '⚖️ Compare All Scenarios';
+      btn.innerHTML = icon('scale') + ' Compare All Scenarios';
       isRunning = false;
     });
 
@@ -664,10 +704,10 @@
       const umberTextEl = document.getElementById('umber-text');
 
       // Reset UI
-      btn.disabled = true; btn.textContent = '⏳ Running...';
+      btn.disabled = true; btn.innerHTML = icon('refresh', 'ic-spin') + ' Running…';
       document.getElementById('status').innerHTML = '';
       proofCard.classList.remove('show', 'fail');
-      proofSeal.textContent = '🛡️'; proofStamp.textContent = 'VERIFIED'; proofStamp.style.cssText = '';
+      proofSeal.innerHTML = icon('shield'); proofStamp.textContent = 'VERIFIED'; proofStamp.style.cssText = '';
       document.getElementById('council-rationale').textContent = '';
       councilDeliberation.classList.add('hidden');
       emberTextEl.textContent = ''; umberTextEl.textContent = '';
@@ -689,7 +729,7 @@
       const _gaugeLbl = document.getElementById('gauge-label');
       if (_gaugeLbl) _gaugeLbl.textContent = '—';
       resetSteps();
-      addStatus(`🔄 Initializing Symbiosis Engine — ${activeScenario.label}…`);
+      addStatus(`${icon('refresh')} Initializing Symbiosis Engine — ${activeScenario.label}…`);
       activateStep(1);
 
       // ── Canonical Intent ───────────────────────────────────────────────────
@@ -726,14 +766,14 @@
         const compliant = proof.publicInputs?.compliance === 'PASS';
         const engineLabel = proof.engine === 'wasm' ? 'WASM' : 'mock';
         addStatus(
-          `${compliant ? '✅' : '❌'} QSSM Proof: ${proof.publicInputs?.compliance} — ${proof.benchmarkMs}ms <span class="tag">${engineLabel}</span>`,
+          `${compliant ? icon('check', 'ic-ok') : icon('x', 'ic-bad')} QSSM Proof: ${proof.publicInputs?.compliance} — ${proof.benchmarkMs}ms <span class="tag">${engineLabel}</span>`,
           compliant ? '' : 'error'
         );
         setMetric('m-qssm', `${proof.benchmarkMs}ms · ${engineLabel}`);
         document.getElementById('proof-details').innerHTML =
           `Beam ${proof.publicInputs?.beamId} · ${proof.publicInputs?.compliance} · ${proof.benchmarkMs}ms · ${engineLabel}`;
         if (!compliant) {
-          proofSeal.textContent = '⚠️';
+          proofSeal.innerHTML = icon('alert');
           proofCard.classList.add('fail');
           proofStamp.textContent = 'FAILED';
           proofStamp.style.color = 'var(--accent)';
@@ -748,7 +788,7 @@
         graph.start('mmr');
         const { root: mmrRoot, engine: mmrEngine } = await appendMMR(proof);
         graph.complete('mmr', [`root ${mmrRoot.slice(0, 12)}…`]);
-        addStatus(`✅ MMR Root: ${mmrRoot.slice(0, 16)}… <span class="tag">${mmrEngine}</span>`);
+        addStatus(`${icon('check', 'ic-ok')} MMR Root: ${mmrRoot.slice(0, 16)}… <span class="tag">${mmrEngine}</span>`);
         setMetric('m-mmr', mmrRoot.slice(0, 10) + '…');
         activateStep(3);
 
@@ -763,7 +803,7 @@
           renderSCUGS({ compliant, beamId: activeScenario.beamId, domain: activeScenario.domain, yieldKsi, requiredKsi });
         }
         graph.complete('scugs', [compliant ? 'within-tolerance' : 'violation-detected']);
-        addStatus(`✅ SCUGS Tier‑1 Render: ${compliant ? 'Active' : 'VIOLATION DETECTED'}`);
+        addStatus(`${compliant ? icon('check', 'ic-ok') : icon('alert', 'ic-bad')} SCUGS Tier‑1 Render: ${compliant ? 'Active' : 'VIOLATION DETECTED'}`);
         activateStep(4);
 
         // ── Hermes orchestration ───────────────────────────────────────────
@@ -773,7 +813,7 @@
           { compliance: proof.publicInputs?.compliance, domain: activeScenario.domain, beamId: activeScenario.beamId }
         );
         graph.complete('hermes', hermesResult.agents || []);
-        addStatus(`🧠 Hermes: ${hermesResult.orchestration}`);
+        addStatus(`${icon('network')} Hermes: ${hermesResult.orchestration}`);
         showHermesCard(hermesResult);
 
         // ── NVIDIA SSE streaming — background, non-blocking ───────────────
@@ -836,14 +876,14 @@
         graph.complete('council', [decision.verdict, `φ=${decision.harmony}`]);
         const councilLabel = decision.engine === 'nvidia' ? 'NVIDIA' : 'mock';
         addStatus(
-          `⚡ Council (Round ${decision.rounds}): ${decision.verdict} <span class="tag">${councilLabel}</span>`,
+          `${icon('bolt')} Council (Round ${decision.rounds}): ${decision.verdict} <span class="tag">${councilLabel}</span>`,
           compliant ? '' : 'error'
         );
-        addStatus(`🧪 Harmony: ${decision.harmony} | Color: <span class="swatch" style="background:${decision.color};"></span>`);
+        addStatus(`${icon('flask')} Harmony: ${decision.harmony} | Color: <span class="swatch" style="background:${decision.color};"></span>`);
         setMetric('m-harmony', decision.harmony);
         if (decision.preMortem) {
-          addStatus(`⚠️ Pre‑Mortem: ${decision.preMortem}`);
-          addStatus(`🔍 Check: ${decision.preMortemCheck}`);
+          addStatus(`${icon('alert')} Pre‑Mortem: ${decision.preMortem}`);
+          addStatus(`${icon('search')} Check: ${decision.preMortemCheck}`);
         }
         activateStep(5);
 
@@ -856,12 +896,12 @@
           payment = await initiatePayment(decision.paymentAmount, activeScenario.beamId);
           graph.complete('stripe', [payment.status, payment.id?.slice(0, 12) || 'mock']);
           const payLabel = payment.mock ? `${payment.status} (mock)` : payment.status;
-          addStatus(`💳 Payment: ${payLabel}`);
+          addStatus(`${icon('card')} Payment: ${payLabel}`);
           setMetric('m-stripe', payment.status);
           showReceiptCard(payment, activeScenario.beamId);
         } else {
           graph.fail('stripe', 'blocked-compliance');
-          addStatus(`🚫 Payment blocked — compliance violation on ${activeScenario.beamId}`, 'error');
+          addStatus(`${icon('block', 'ic-bad')} Payment blocked — compliance violation on ${activeScenario.beamId}`, 'error');
           setMetric('m-stripe', 'BLOCKED');
         }
         activateStep(6);
@@ -870,17 +910,17 @@
         graph.start('esther');
         if (compliant && councilProceed) {
           speakEsther(`Compliance seal complete. ${activeScenario.label} certified. Payment processed. Sovereign Dominion seal issued.`);
-          addStatus('🎤 Esther: Compliance seal confirmed');
+          addStatus(`${icon('mic')} Esther: Compliance seal confirmed`);
           graph.complete('esther', ['seal-confirmed']);
         } else {
           speakEsther(`Compliance failure on ${activeScenario.label}. Beam ${activeScenario.beamId} does not meet structural requirements. Human engineering review required immediately.`);
-          addStatus('🎤 Esther: Failure alert issued', 'error');
+          addStatus(`${icon('mic')} Esther: Failure alert issued`, 'error');
           graph.complete('esther', ['failure-alert']);
         }
         activateStep(7);
 
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
-        addStatus(`✨ <strong>Demo complete in ${elapsed}s — ${activeScenario.label}</strong>`);
+        addStatus(`${icon('sparkle', 'ic-ok')} <strong>Demo complete in ${elapsed}s — ${activeScenario.label}</strong>`);
 
         // ── Certificate download button ────────────────────────────────────
         const proofHex = Array.from((proof.proof || new Uint8Array(16)).slice(0, 16))
@@ -915,13 +955,13 @@
           launchConfetti();
         }
       } catch (e) {
-        addStatus(`❌ Error: ${e.message}`, 'error');
+        addStatus(`${icon('x', 'ic-bad')} Error: ${e.message}`, 'error');
         console.error(e);
       } finally {
         streamController.abort();
         document.body.classList.remove('demo-live');
         btn.disabled = false;
-        btn.textContent = '▶ RUN DEMO';
+        btn.innerHTML = icon('play', 'ic-fill') + ' RUN DEMO';
         isRunning = false;
       }
     });
@@ -964,12 +1004,12 @@
         if (track.paused) {
           await track.play();
           musicBtn.classList.add('playing');
-          musicBtn.textContent = '⏸';
+          musicBtn.innerHTML = icon('pause');
           document.body.classList.add('with-music');
         } else {
           track.pause();
           musicBtn.classList.remove('playing');
-          musicBtn.textContent = '🎵';
+          musicBtn.innerHTML = icon('music');
           document.body.classList.remove('with-music');
         }
       } catch {

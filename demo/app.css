@@ -57,6 +57,33 @@ header h1 {
   margin-bottom: 1rem;
 }
 
+/* ===== Icon system — inline SVG line glyphs, colored via currentColor ===== */
+.ic {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.14em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+.ic-fill { fill: currentColor; stroke: none; }
+.ic-ok   { color: var(--ok); }
+.ic-bad  { color: var(--accent); }
+.ic-spin { animation: icSpin 0.8s linear infinite; }
+@keyframes icSpin { to { transform: rotate(360deg); } }
+/* Header wordmark emblem — ember, glowing */
+.ic-logo { color: var(--accent); filter: drop-shadow(0 0 10px var(--accent)); vertical-align: -0.16em; }
+/* Icons riding inside status-log lines get a hair more baseline lift + right gap */
+.status-line .ic { vertical-align: -0.16em; margin-right: 2px; }
+/* Slightly heavier stroke at very large sizes so the logo/seal don't look wiry */
+.splash-logo .ic, .proof-seal .ic, .seal-eagle .ic { stroke-width: 1.7; }
+.splash-logo { color: var(--accent); }
+
 /* ===== Splash ===== */
 #splash {
   position: fixed;
@@ -115,6 +142,10 @@ button.chromatic {
   color: #fff;
   font-weight: 600;
   letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   transition: filter 0.15s, transform 0.1s, box-shadow 0.15s, opacity 0.2s;
   will-change: transform;
 }
@@ -156,7 +187,8 @@ button.chromatic:disabled {
   display: block;
   animation: scaleIn 0.32s ease both;
 }
-.proof-seal { font-size: 1.8rem; }
+.proof-seal { font-size: 1.8rem; color: var(--ok); filter: drop-shadow(0 0 10px rgba(34,197,94,0.45)); }
+.proof-card.fail .proof-seal { color: var(--accent); filter: drop-shadow(0 0 10px rgba(255,69,0,0.45)); }
 .proof-title { font-weight: 600; margin-top: 0.2rem; }
 .proof-details {
   font-family: var(--mono);
@@ -526,11 +558,14 @@ button.chromatic:disabled {
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 8px;
   padding: 0 14px;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   cursor: pointer;
   color: var(--text);
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .voice-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 .voice-btn.listening {
