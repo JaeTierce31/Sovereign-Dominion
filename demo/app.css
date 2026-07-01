@@ -1,16 +1,48 @@
 :root {
-  --bg: #0a0a0f;
-  --surface: #1a1a2e;
-  --accent: #ff4500;
-  --accent-2: #ffaa00;
-  --ok: #22c55e;
-  --text: #e0e0e0;
-  --chromatic-glow: 0 0 15px var(--accent);
+  /* Obsidian base — deep near-black with a whisper of royal navy */
+  --bg: #07070c;
+  --bg-2: #0d0e1a;
+  --surface: #14141f;
+
+  /* Prestige gold — primary brand accent (from the medallion) */
+  --gold: #d4af37;
+  --gold-soft: #ecc86a;
+  --gold-deep: #9a7420;
+  --gold-line: rgba(212, 175, 55, 0.22);
+
+  /* Jewel state colours (stained-glass palette) */
+  --ok: #34c98a;         /* emerald */
+  --ruby: #d23a52;
+  --sapphire: #3f7fd6;
+  --amethyst: #a78bfa;
+
+  /* Ember — retained as the "energy / live action" accent only */
+  --accent: #ff5a1f;
+  --accent-2: #ffb347;
+
+  --text: #ece7db;
+  --text-dim: rgba(236, 231, 219, 0.62);
+
+  /* Glassmorphism tokens */
+  --glass: rgba(20, 21, 34, 0.55);
+  --glass-strong: rgba(24, 25, 40, 0.72);
+  --glass-border: rgba(212, 175, 55, 0.18);
+  --glass-blur: blur(18px) saturate(1.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-radius: 16px;
+
+  --chromatic-glow: 0 0 24px rgba(212, 175, 55, 0.35);
+  --gold-grad: linear-gradient(135deg, var(--gold-soft) 0%, var(--gold) 45%, var(--gold-deep) 100%);
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, ui-serif, serif;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(212, 175, 55, 0.10) 0%, transparent 45%),
+    radial-gradient(100% 100% at 50% 120%, rgba(63, 127, 214, 0.08) 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 60%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: 'SF Pro Display', system-ui, sans-serif;
   display: flex;
@@ -30,11 +62,13 @@ body::before {
   z-index: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(255, 69, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 69, 0, 0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
-  animation: gridScroll 18s linear infinite;
-  opacity: 0.5;
+    linear-gradient(rgba(212, 175, 55, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.035) 1px, transparent 1px);
+  background-size: 46px 46px;
+  animation: gridScroll 26s linear infinite;
+  opacity: 0.6;
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 80%);
 }
 @keyframes gridScroll {
   from { background-position: 0 0, 0 0; }
@@ -336,7 +370,7 @@ button.chromatic:disabled {
   to   { height: 18px; }
 }
 
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 /* ===== Sponsor bar ===== */
 .sponsor-bar {
@@ -1222,3 +1256,224 @@ body.with-music::before { opacity: 0.85; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   PRESTIGE THEME — obsidian + gold, glassmorphic. Layered last so it
+   elevates the existing structure without disturbing layout.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Crest & wordmark ─────────────────────────────────────────────────── */
+#splash { background: radial-gradient(80% 60% at 50% 40%, rgba(212,175,55,0.08), transparent 60%), var(--bg); }
+img.splash-logo {
+  width: min(52vw, 240px);
+  height: auto;
+  font-size: 0;
+  filter: drop-shadow(0 0 46px rgba(212,175,55,0.38));
+  animation: crestFloat 3.2s ease-in-out infinite;
+}
+.splash-text {
+  font-family: var(--serif);
+  font-style: italic;
+  letter-spacing: 0.16em;
+  color: var(--gold-soft);
+  opacity: 0.82;
+}
+@keyframes crestFloat {
+  0%,100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 40px rgba(212,175,55,0.32)); }
+  50%     { transform: translateY(-6px) scale(1.015); filter: drop-shadow(0 0 58px rgba(212,175,55,0.5)); }
+}
+header { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; margin-bottom: 0.4rem; }
+.crest {
+  width: 66px; height: auto;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 14px rgba(212,175,55,0.35));
+  margin-bottom: 4px;
+}
+header h1.wordmark {
+  font-family: var(--serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1.1;
+  background: linear-gradient(180deg, var(--gold-soft) 0%, var(--gold) 55%, var(--gold-deep) 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 12px rgba(212,175,55,0.22));
+}
+.tagline {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Shared glass surface ─────────────────────────────────────────────── */
+.proof-card, .compliance-panel, .hermes-card, .stripe-receipt,
+.exec-graph-panel, .self-healing-panel, .debug-panel, .comparison-table,
+.metrics-bar, .status-panel, .council-deliberation {
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Proof card — gold glass, jewel state edges */
+.proof-card { border-color: var(--gold-line); }
+.proof-card.fail { border-color: rgba(210,58,82,0.5); box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 24px rgba(210,58,82,0.18); }
+.proof-title { font-family: var(--serif); font-size: 1.05rem; letter-spacing: 0.02em; }
+.proof-stamp { color: var(--ok); border-color: var(--ok); }
+
+/* ── Section titles → gold small-caps ─────────────────────────────────── */
+.compliance-title, .hermes-header, .receipt-header, .eg-title, .sh-title {
+  color: var(--gold-soft);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.debug-panel summary { color: var(--gold-soft); }
+
+/* ── Sponsor bar → glass pills ────────────────────────────────────────── */
+.sponsor-badge {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  opacity: 0.92;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.sponsor-badge:hover { transform: translateY(-1px); border-color: var(--gold); box-shadow: 0 4px 16px rgba(212,175,55,0.2); }
+
+/* ── Metrics strip → glass with gold values ───────────────────────────── */
+.metric-cell { border-color: rgba(255,255,255,0.06); }
+.metric-label { color: var(--text-dim); letter-spacing: 0.14em; }
+.metric-value { color: var(--gold-soft); }
+
+/* ── System status chips → glass pills ────────────────────────────────── */
+.sys-chip {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+.sys-chip.online { border-color: rgba(52,201,138,0.4); }
+
+/* ── Scenario cards → glass tiles, gold when active ───────────────────── */
+.scenario-card {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.scenario-card:hover { transform: translateY(-2px); border-color: var(--gold-line); }
+.scenario-card.active {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(212,175,55,0.12), rgba(212,175,55,0.03));
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.35), 0 8px 26px rgba(212,175,55,0.16);
+}
+.sc-icon { color: var(--gold-soft); }
+.scenario-card.active .sc-icon { filter: drop-shadow(0 0 8px rgba(212,175,55,0.5)); }
+.sc-badge.pass { color: var(--ok); border-color: rgba(52,201,138,0.4); }
+.sc-badge.fail { color: var(--ruby); border-color: rgba(210,58,82,0.45); }
+
+/* ── Pipeline steps → gold active glow ────────────────────────────────── */
+.step { color: var(--text); }
+.step.active { color: var(--gold-soft); filter: drop-shadow(0 0 9px rgba(212,175,55,0.6)); }
+
+/* ── RUN DEMO — the crown-jewel gold seal button ──────────────────────── */
+button.chromatic {
+  background: var(--gold-grad);
+  color: #1c1608;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 6px 22px rgba(212,175,55,0.32), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 6px rgba(154,116,32,0.4);
+  border: 1px solid rgba(212,175,55,0.6);
+}
+button.chromatic:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(212,175,55,0.45), inset 0 1px 0 rgba(255,255,255,0.5);
+  filter: brightness(1.04);
+}
+button.chromatic:active:not(:disabled) { transform: translateY(0); }
+button.chromatic:disabled { background: linear-gradient(135deg, #5a5138, #3a341f); color: rgba(255,255,255,0.4); box-shadow: none; }
+
+/* ── Secondary / glass buttons ────────────────────────────────────────── */
+.voice-btn {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--gold-soft);
+}
+.voice-btn:hover { border-color: var(--gold); box-shadow: 0 0 14px rgba(212,175,55,0.2); background: rgba(212,175,55,0.08); }
+.voice-btn.playing, .voice-btn.listening { border-color: var(--gold); color: var(--gold); }
+
+.cert-btn, .compare-btn {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  color: var(--gold-soft);
+  border-radius: 12px;
+}
+.cert-btn:hover, .compare-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: rgba(212,175,55,0.08);
+  box-shadow: 0 4px 18px rgba(212,175,55,0.18);
+}
+
+/* Inject-fault keeps ember (danger / energy) but as a glass outline */
+.sh-fault-btn {
+  background: rgba(255,90,31,0.10);
+  border: 1px solid rgba(255,90,31,0.4);
+  color: var(--accent-2);
+}
+.sh-fault-btn:hover { background: rgba(255,90,31,0.18); }
+
+/* ── Tags, swatches, agent chips ──────────────────────────────────────── */
+.tag {
+  background: rgba(212,175,55,0.12);
+  border: 1px solid var(--gold-line);
+  color: var(--gold-soft);
+}
+.agent-chip.active { border-color: var(--gold); color: var(--gold-soft); background: rgba(212,175,55,0.08); }
+.receipt-ok { color: var(--ok); }
+
+/* ── Self-healing state colours → jewel tones ─────────────────────────── */
+.sh-state-safe .sh-badge, .sh-state-healed .sh-badge { color: var(--ok); }
+.sh-state-fail .sh-badge { color: var(--ruby); }
+.sh-state-rollback .sh-badge { color: var(--amethyst); }
+
+/* ── Comparison table ─────────────────────────────────────────────────── */
+.comp-table th { color: var(--gold-soft); letter-spacing: 0.08em; }
+
+/* ── Icon accent recolours ────────────────────────────────────────────── */
+.ic-ok  { color: var(--ok); }
+.ic-bad { color: var(--ruby); }
+.sponsor-badge .ic { color: var(--gold-soft); }
+
+/* ── φ-Harmony gauge — gold track, empty until the run animates it ─────── */
+.gauge-track { stroke: var(--gold-line); }
+.gauge-arc {
+  stroke: var(--gold);
+  stroke-dasharray: 238.76;   /* 2π·38 — full circumference */
+  stroke-dashoffset: 238.76;  /* start empty; JS fills to the score */
+}
+.gauge-label { fill: var(--gold-soft); }
+
+/* ── Resting-state refinements ────────────────────────────────────────── */
+/* Council bar: a quiet gold divider at rest; JS floods it with the verdict colour on run */
+#council-bar {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold-line) 30%, var(--gold-line) 70%, transparent);
+  box-shadow: none;
+  opacity: 0.6;
+}
+/* Don't render the status console as an empty glass box before a run */
+.status-panel:empty { display: none; }
