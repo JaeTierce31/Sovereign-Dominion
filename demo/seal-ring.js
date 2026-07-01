@@ -41,16 +41,48 @@ export function initSealRing(container) {
     segs.push(seg);
   }
 
-  // Ring sits behind the crest image; crest stays centred on top.
-  host.insertBefore(svg, host.firstChild);
+  // Guilloché engraving — a faint rose of overlapping circles that radiates
+  // behind the seal, echoing the medallion's sacred-geometry core.
+  const guilloche = buildGuilloche(svgNS);
+
+  // Paint order: guilloché (back) → ring segments → crest image (front).
+  host.insertBefore(guilloche, host.firstChild);
+  host.insertBefore(svg, guilloche.nextSibling);
 
   capEl = document.createElement('div');
   capEl.className = 'seal-cap';
   host.appendChild(capEl);
 }
 
+function buildGuilloche(svgNS) {
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'seal-guilloche');
+  svg.setAttribute('viewBox', '0 0 200 200');
+  svg.setAttribute('aria-hidden', 'true');
+  const g = document.createElementNS(svgNS, 'g');
+  const cx = 100, cy = 100;
+  const PETALS = 12, PR = 40, PD = 40;
+  for (let i = 0; i < PETALS; i++) {
+    const a = (i / PETALS) * 2 * Math.PI;
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', (cx + Math.cos(a) * PD).toFixed(2));
+    c.setAttribute('cy', (cy + Math.sin(a) * PD).toFixed(2));
+    c.setAttribute('r', String(PR));
+    g.appendChild(c);
+  }
+  for (const r of [20, PD, PD + PR]) {
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', String(cx));
+    c.setAttribute('cy', String(cy));
+    c.setAttribute('r', String(r));
+    g.appendChild(c);
+  }
+  svg.appendChild(g);
+  return svg;
+}
+
 export function resetSeal() {
-  host?.classList.remove('sealed', 'broken');
+  host?.classList.remove('sealed', 'broken', 'running');
   segs.forEach(s => (s.setAttribute('class', 'seal-seg')));
   if (capEl) { capEl.textContent = ''; capEl.classList.remove('show'); }
 }
@@ -58,6 +90,7 @@ export function resetSeal() {
 // n is 1‑indexed (matches activateStep). Prior arcs lock 'done', arc n glows 'active'.
 export function setSealStep(n) {
   if (!segs.length) return;
+  host?.classList.add('running');
   for (let i = 0; i < N; i++) {
     segs[i].setAttribute('class',
       i < n - 1 ? 'seal-seg done' : (i === n - 1 ? 'seal-seg active' : 'seal-seg'));
@@ -71,6 +104,7 @@ export function setSealStep(n) {
 // ok=true → the ring fuses into a complete gold seal; ok=false → it breaks.
 export function sealComplete(ok) {
   if (!segs.length) return;
+  host?.classList.remove('running');
   if (ok) {
     segs.forEach(s => s.setAttribute('class', 'seal-seg done'));
     host?.classList.add('sealed');
