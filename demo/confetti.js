@@ -75,7 +75,7 @@ function showSealOverlay() {
   overlay.id = 'seal-overlay';
   overlay.innerHTML = `
     <div class="seal-inner">
-      <div class="seal-eagle">🦅</div>
+      <div class="seal-eagle"><svg class="ic"><use href="#i-emblem"></use></svg></div>
       <div class="seal-title">COMPLIANCE SEAL ISSUED</div>
       <div class="seal-sub">Sovereign Dominion · Cryptographically Verified</div>
     </div>
@@ -95,7 +95,7 @@ function showSealOverlay() {
       @keyframes sealFadeIn { from { opacity:0; transform:scale(0.88); } to { opacity:1; transform:scale(1); } }
       @keyframes sealFadeOut { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(1.05); } }
       .seal-inner { text-align:center; padding:2rem 2.5rem; background:linear-gradient(135deg,rgba(34,197,94,0.14),rgba(255,69,0,0.08)); border:1px solid rgba(34,197,94,0.45); border-radius:18px; backdrop-filter:blur(14px); box-shadow:0 0 50px rgba(34,197,94,0.22),0 0 0 1px rgba(255,255,255,0.06); }
-      .seal-eagle { font-size:2.8rem; margin-bottom:0.5rem; filter:drop-shadow(0 0 16px rgba(34,197,94,0.5)); animation:pulse 0.7s ease; }
+      .seal-eagle { font-size:2.8rem; color:#22c55e; margin-bottom:0.5rem; filter:drop-shadow(0 0 16px rgba(34,197,94,0.5)); animation:pulse 0.7s ease; }
       .seal-title { font-family:ui-monospace,monospace; font-size:1rem; font-weight:700; letter-spacing:0.14em; color:#22c55e; text-shadow:0 0 22px rgba(34,197,94,0.7); }
       .seal-sub { font-family:ui-monospace,monospace; font-size:0.68rem; opacity:0.55; margin-top:0.4rem; letter-spacing:0.06em; }
     `;
