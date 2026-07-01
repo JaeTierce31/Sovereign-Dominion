@@ -1,0 +1,87 @@
+# Illustrative charter sketch for the Housing (NSPIRE) domain — NOT legally reviewed.
+# The kernel loads a charter and checks every Intent against it in the gate.
+# Predicates are written against the Intent + evidence/inspector context the kernel
+# resolves. Field names are indicative; they bind to the real model during
+# Sovereign-Dignity's `packages/shared-types` implementation.
+#
+# This is the housing-inspection sibling of `charter.example.yaml` (the earlier,
+# eligibility-domain sketch — kept as-is; that draft assumed a homeless-services HMIS
+# domain, which is not what Sovereign-Dignity turned out to be). Same DSL, different
+# domain: no client PII/consent invariants here — this domain is about proving a
+# dwelling unit's physical condition was inspected and evidenced honestly, not about
+# protecting a person's eligibility record.
+
+charter:
+  id: dignity.housing-inspection
+  version: 0.1.0-draft
+  domain: housing
+
+invariants:
+
+  - id: evidence.hash_immutability
+    rationale: >
+      Once evidence (photo, document, audio) is hashed on-device, the stored hash may
+      never be recomputed or overwritten — only appended alongside a new evidence item.
+    appliesWhen: "action == 'inspection.submit_evidence'"
+    mustHold: "intent.payload.evidenceHash != null
+               && intent.payload.evidenceHash == sha256(intent.payload.evidenceBytes)"
+    onViolation: block
+
+  - id: evidence.chain_of_custody
+    rationale: >
+      Every evidence item must link to the previous entry in its unit's evidence chain
+      (Merkle/hash-chain), so no item can be inserted, reordered, or removed silently.
+    appliesWhen: "action == 'inspection.submit_evidence'"
+    mustHold: "intent.payload.previousHash == subject.evidenceChain.lastHash"
+    onViolation: block
+
+  - id: inspector.credential_valid
+    rationale: >
+      Only a HUD NSPIRE-certified inspector of record may submit or attest inspection
+      findings; their credential must be current at the time of the Intent.
+    appliesWhen: "action == 'inspection.submit_evidence' || action == 'inspection.attest'"
+    mustHold: "intent.actor.credential.kind == 'nspire_inspector'
+               && intent.actor.credential.status == 'active'
+               && now() < intent.actor.credential.expiresAt"
+    onViolation: block
+
+  - id: inspection.dual_attestation
+    rationale: >
+      No Seal issues on an inspector's word alone — a second attesting party (reviewer
+      or supervising inspector) must independently confirm the finding before sealing.
+      AI severity classification is advisory only and never substitutes for either
+      attestation.
+    appliesWhen: "action == 'inspection.finalize'"
+    mustHold: "intent.payload.attestations.length >= 2
+               && intent.payload.attestations[0].actorId != intent.payload.attestations[1].actorId
+               && all(intent.payload.attestations, a => a.kind == 'human')"
+    onViolation: block
+
+  - id: deficiency.severity_disclosure
+    rationale: >
+      A finalized inspection may not omit or downgrade a life-threatening or severe
+      deficiency once evidence establishes it — the recorded severity must match the
+      NSPIRE severity the evidence supports.
+    appliesWhen: "action == 'inspection.finalize'"
+    mustHold: "intent.payload.deficiencies.every(d => d.recordedSeverity >= d.evidenceImpliedSeverity)"
+    onViolation: block
+
+  - id: retention.record_integrity
+    rationale: >
+      Inspection records and their evidence chains must be retained for the HUD-mandated
+      window; deletion before that window closes is refused (not merely logged).
+    appliesWhen: "action == 'record.delete'"
+    mustHold: "now() >= subject.record.retainUntil"
+    onViolation: block
+
+  - id: audit.append_only
+    rationale: "The audit log is tamper-evident and append-only; deletions are recorded."
+    appliesWhen: "action startsWith 'audit.'"
+    mustHold: "action == 'audit.append'"
+    onViolation: block
+
+# Notes:
+# - onViolation: block    → Intent refused before execution (gate).
+# - onViolation: rollback → post-condition drift; the self-healing runtime rewinds to
+#   the last verified-safe state (same engine as `src/kernel/selfHealing.ts`).
+# - Domain modules may register additional invariants; they compose over this base.

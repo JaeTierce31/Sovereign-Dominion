@@ -12,27 +12,38 @@ do on violation:
 
 - `block` — the Intent is refused before it executes.
 - `rollback` — a post-condition drifted; the self-healing runtime rewinds to the last
-  verified-safe state (the same mechanism as the demo's self-healing panel).
+  verified-safe state (the same mechanism as the demo's self-healing panel, generalized
+  in `src/kernel/selfHealing.ts`).
 
 Invariants compose: a base charter applies platform-wide; each domain registers
 additional invariants at boot (`CapabilityRegistration.invariants`).
 
 ## Files
 
-- `charter.example.yaml` — a **sketch** of the base charter for the HMIS domain. It is
-  illustrative, not legally reviewed. The real charter must be authored with Continuum of
-  Care and legal sign-off (HUD, VAWA, 42 CFR Part 2, state rules).
+- `charter.example.yaml` — an early **sketch** written before `Sovereign-Dignity` could
+  be reviewed. It assumed a homeless-services eligibility domain (consent/ROI, VAWA DV
+  segregation, 42 CFR Part 2). That assumption was wrong — see
+  `docs/UNIFICATION.md`'s status note — but the file is kept as-is: it's still a valid
+  illustration of the DSL, just for a domain this platform doesn't actually implement.
+- `charter.housing-inspection.example.yaml` — the **current** sketch, for the domain
+  `Sovereign-Dignity` actually is: HUD NSPIRE physical housing inspection. Same DSL,
+  invariants scoped to evidence integrity, chain of custody, inspector credentialing,
+  and dual attestation instead of consent/eligibility.
 
-## Ground rules encoded here
+Both are illustrative, not legally reviewed. The real charter must be authored with
+counsel and HUD guidance sign-off.
 
-1. Consent is scoped and expires; nothing flows past its scope or date.
-2. DV victim-service data is **segregated** from the shared store (VAWA) — not merely masked.
-3. Eligibility determinations require a **human**; no AI confidence score substitutes.
-4. Substance-use records (42 CFR Part 2) get stricter sharing rules.
-5. Minors require guardian consent for sharing.
-6. Data has a retention limit and a right-to-be-forgotten path.
+## Ground rules encoded in the current (housing-inspection) charter
+
+1. Evidence hashes are immutable once captured; nothing recomputes or overwrites one.
+2. Evidence chains are tamper-evident (chain-of-custody link to the prior entry).
+3. Only a HUD NSPIRE-certified, currently-active inspector may submit or attest findings.
+4. No Seal issues without **dual human attestation** — AI severity classification is
+   advisory only and never substitutes for it.
+5. Recorded deficiency severity may not be downgraded below what the evidence supports.
+6. Records are retained for the HUD-mandated window; deletion before that window closes
+   is refused, not merely logged.
 7. The audit log is append-only; deletions are recorded, never silent.
-8. Every share is purpose-limited to a declared, logged purpose.
 
 > These are a starting point for review, not a compliance guarantee. Treat the YAML as a
-> design artifact that a CoC + counsel turn into the binding charter.
+> design artifact that HUD guidance + counsel turn into the binding charter.

@@ -1,10 +1,22 @@
 # Unification Spec — Sovereign Dominion + Sovereign Dignity
 
-**Status:** Draft (kernel side). The domain layer is pending reconciliation against
-the `Sovereign-Dignity` repository (formerly `hmis-platform`), whose stack and data
-model are not yet reviewed. Everything below the "Kernel" line is authoritative;
-everything in the "Domain" line is a contract the HMIS app must satisfy, not a claim
-about what it currently does.
+**Status:** Draft (kernel side), domain corrected. The domain layer was originally
+guessed at before the `Sovereign-Dignity` repository could be reviewed, and that guess
+was wrong: an earlier draft of this document assumed a homeless-services HMIS domain
+(coordinated entry, VAWA DV segregation, HUD LSA/APR/CAPER/PIT reporting). Having since
+read `Sovereign-Dignity`'s `develop` branch — its frozen "canonical specification v1.0"
+(README + three accepted ADRs) — the real domain is **HUD NSPIRE physical housing
+inspection**: an offline-first inspector app producing cryptographically hashed and
+chained evidence (SHA-256, Ed25519, Merkle) of dwelling-unit condition, verified by
+backend ledger/verifier services. Everything below the "Kernel" line is authoritative;
+everything in the "Domain" line is a contract the housing-inspection app must satisfy,
+not a claim about what it currently does.
+
+**Implementation note:** the first real, typed kernel code landed this pass at
+`src/kernel/` (inside the existing app, so it's covered by the current `tsconfig.json` /
+`vitest.config.ts` / `eslint.config.js` scope without touching build config). Promotion
+to the standalone `/kernel` package (`@sovereign/kernel`) described in §5 is future work,
+once it's ready to be published and consumed by more than one repo.
 
 ---
 
@@ -13,12 +25,13 @@ about what it currently does.
 Dominion and Dignity are **one kernel pointed at opposite ends of "what are we protecting."**
 
 - **Dominion** proves *structures* are safe without trusting the inspector (a beam, IBC 1604).
-- **Dignity** proves *people* are served without exposing the person (eligibility, consent, HMIS).
+- **Dignity** proves *dwellings* are safe and code-compliant without trusting a paper
+  inspection report anyone could falsify (NSPIRE deficiencies, evidence chain of custody).
 
-Same machinery — proof, audit, gate, self-heal, seal — different domain payloads.
+Same machinery — proof, audit, gate, self-heal, seal — different inspection object.
 
 > Dominion is the compiler. Dignity is the type system. Together they are a **trust
-> layer for human services.**
+> layer for the built environment.**
 
 ---
 
@@ -26,15 +39,18 @@ Same machinery — proof, audit, gate, self-heal, seal — different domain payl
 
 Merge the **kernel and the identity**. Keep the **domains clean**.
 
-- **One kernel** — Intent envelope, consent/eligibility gate, ZK proof, immutable
+- **One kernel** — Intent envelope, invariant gate, ZK proof, immutable
   audit (Moloch MMR), self-healing invariants, Seal issuer. Domain-agnostic.
 - **One identity** — the crest, the Seal, the auth/audit spine.
-- **HMIS (Dignity) is the flagship domain.** Construction/IBC/SCUGS (Dominion) is a
-  *separate, optional domain module* that shares the kernel.
+- **Housing inspection (Dignity) is the flagship domain.** Construction/IBC/SCUGS
+  (Dominion) is a *separate, optional domain module* that shares the kernel.
 
-**Non-goal:** a single UI that mixes human-services intake with structural inspection.
-A caseworker running coordinated entry must never see a mold-inspection surface, and a
-building inspector must never see client PII. Shared kernel, separate surfaces.
+**Non-goal:** a single UI that mixes dwelling-unit inspection with structural
+inspection. A housing inspector working an NSPIRE unit inspection must never see a
+beam-stress surface, and a structural inspector must never see NSPIRE deficiency
+workflows — the taxonomies, credentials, and reporting obligations differ even though
+both are "inspect an object, hash the evidence, seal a verified record." Shared kernel,
+separate surfaces.
 
 ---
 
@@ -42,19 +58,21 @@ building inspector must never see client PII. Shared kernel, separate surfaces.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ SURFACES        caseworker app · client portal (holds Seal) ·  │
-│                 funder/HUD attestation · (separately) inspector │
+│ SURFACES        housing inspector app (holds evidence) ·       │
+│                 owner/PHA attestation portal · HUD NSPIRE       │
+│                 reporting · (separately) structural inspector  │
 ├───────────────────────────────────────────────────────────────┤
-│ DOMAIN          Dignity/HMIS  — HUD-conformant model + workflows│
+│ DOMAIN          Dignity/Housing — NSPIRE-conformant inspection  │
+│                 model + evidence chain                          │
 │                 Dominion/AEC  — IBC 1604 + SCUGS (separate app) │
 ├───────────────────────────────────────────────────────────────┤
 │ KERNEL          Intent → Gate → Execute → Observe → Seal        │
-│   proof (QSSM/ZK) · audit (Moloch MMR) · consent gate ·         │
+│   proof (QSSM/ZK) · audit (Moloch MMR) · invariant gate ·       │
 │   self-healing invariant runtime · capability registry · Seal   │
 ├───────────────────────────────────────────────────────────────┤
 │ CONSTITUTION    machine-checkable invariants (the Dignity charter)│
-│   consent scope · ROI expiry · DV segregation · human-in-loop ·  │
-│   retention · purpose limitation                                 │
+│   evidence immutability · chain of custody · inspector           │
+│   credentialing · dual attestation · retention                   │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -71,17 +89,17 @@ Both domains speak one contract to the kernel. This is the merge; a shared UI is
 // Every domain action is an Intent.
 interface Intent {
   id: string;
-  actor: ActorRef;                 // who (role-scoped)
-  subject: SubjectRef;             // whom/what it concerns (client, beam, …)
-  action: string;                  // "enrollment.share", "eligibility.attest", …
-  domain: "hmis" | "aec";
-  payload: unknown;                // HUD-conformant record for HMIS
-  requiredProofs: string[];        // e.g. ["consent.roi.valid", "eligibility.hud_vash"]
+  actor: ActorRef;                 // who (role-scoped, e.g. credentialed inspector)
+  subject: SubjectRef;              // whom/what it concerns (dwelling unit, beam, …)
+  action: string;                  // "inspection.submit_evidence", "beam.assess", …
+  domain: "housing" | "aec";
+  payload: unknown;                // NSPIRE-conformant record for Housing
+  requiredProofs: string[];        // e.g. ["evidence.hash_valid", "inspector.credential_valid"]
 }
 
 // The Constitution is a set of Invariants (see /constitution).
 interface Invariant {
-  id: string;                      // "consent.roi_scope"
+  id: string;                      // "evidence.chain_of_custody"
   appliesWhen: Predicate;          // when this rule is in force
   mustHold: Predicate;             // what must be true
   onViolation: "block" | "rollback";
@@ -90,22 +108,22 @@ interface Invariant {
 
 // Domains register their capabilities + invariants at boot.
 interface CapabilityRegistration {
-  domain: "hmis" | "aec";
+  domain: "housing" | "aec";
   actions: ActionSpec[];           // what this domain can ask the kernel to do
   invariants: Invariant[];         // domain-specific rules layered on the base charter
 }
 ```
 
-**Kernel loop** (already implemented in Dominion as Intent → ExecutionGraph +
-self-healing runtime):
+**Kernel loop** (the first real implementation lands this pass in `src/kernel/`,
+generalizing the `demo/` prototypes' Intent → ExecutionGraph + self-healing runtime):
 
 ```
 submitIntent(intent)
   → gate(intent, Constitution)      // all mustHold predicates pass, else block
-  → verify(intent.requiredProofs)   // ZK proofs check out
+  → verify(intent.requiredProofs)   // ZK / hash proofs check out
   → execute(intent)                 // domain handler runs
   → observe()                       // hash → append to Moloch MMR (tamper-evident)
-  → seal(intent)                    // issue/refresh client-held credential
+  → seal(intent)                    // issue/refresh the evidence Seal
 // self-healing: if a post-condition invariant drifts, roll back to last verified-safe state
 ```
 
@@ -117,83 +135,105 @@ submitIntent(intent)
 /kernel         @sovereign/kernel — qssm-rs, moloch-mmr, invariant runtime,
                 intent/exec-graph, capability-registry, seal issuer  (publishable)
 /constitution   invariant DSL + charter rulesets (this repo seeds it)
-/domain-hmis    Sovereign-Dignity — HUD-conformant model + workflows
+/domain-housing Sovereign-Dignity — HUD NSPIRE-conformant inspection model + evidence chain
 /domain-aec     Dominion — IBC 1604 + SCUGS (the current demo, productized)
-/surfaces       caseworker · client-Seal · funder · (separate) inspector
+/surfaces       housing inspector · owner/PHA attestation · HUD reporting ·
+                (separate) structural inspector
 /reference      the beam demo, kept as a proof-of-kernel + marketing artifact
 ```
 
-The current `demo/` becomes `/reference` (proof that the kernel works end-to-end);
-`core/` (qssm-rs, moloch-mmr) is the seed of `/kernel`.
+The current `demo/` remains `/reference` (proof that the kernel works end-to-end);
+`core/` (qssm-rs, moloch-mmr) plus the new `src/kernel/` are the seed of `/kernel`.
 
 ---
 
-## 6. HMIS conformance (the floor)
+## 6. NSPIRE conformance (the floor)
 
-The kernel is **additive**; it never replaces the HUD-mandated data layer.
+The kernel is **additive**; it never replaces the HUD-mandated inspection standard.
 
-- **HMIS Data Standards** — Universal Data Elements (UDE) and Project Descriptor Data
-  Elements (PDDE) are the canonical schema. Kernel primitives attach *alongside* a
-  conformant record (a proof, an audit entry, a seal) — they do not rename or replace it.
-- **Interchange** — HUD **HMIS CSV / XML** import-export is the integration path with
-  other systems, not deep plugins into closed vendor products (WellSky/ServicePoint,
-  Bitfocus/Clarity).
-- **Reporting** — LSA, APR/CAPER, PIT/HIC generated from the canonical store; the MMR
-  root can attest a report was produced from an unaltered dataset.
-- **Regulatory** — 42 CFR Part 2 (substance-use records), FERPA where applicable, and
-  state rules constrain sharing. These become Constitution invariants.
+- **NSPIRE standards** — HUD's National Standards for the Physical Inspection of Real
+  Estate (the unified successor to UPCS/HQS) define the inspectable areas (site,
+  building exterior, building systems, unit, common areas) and a deficiency severity
+  scale (life-threatening, severe, moderate/low). Kernel primitives attach *alongside*
+  a conformant finding (a proof, an audit entry, a seal) — they do not rename or replace
+  the standard's own taxonomy.
+- **Interchange** — inspection results and deficiency records should round-trip with
+  HUD's inspection systems (successor to REAC/PIC scoring), not depend on deep,
+  proprietary plugins into closed vendor tools.
+- **Inspector credentialing** — every `inspection.submit_evidence` Intent carries a
+  `requiredProofs` entry that the acting inspector holds a valid HUD NSPIRE certification;
+  this becomes a Constitution invariant (`inspector.credential_valid`), not a UI-only check.
+- **Reporting** — deficiency and scoring reports generated from the canonical store; the
+  MMR root can attest a report was produced from an unaltered evidence chain.
 
 ---
 
 ## 7. Non-negotiable design principles
 
-1. **Humans decide; AI advises.** The Council may surface an *explainable, overrideable*
-   recommendation or a data-quality flag — it never gates a person's access to housing or
-   benefits. "A human made this determination" is itself an invariant. No confidence
-   threshold (φ or otherwise) may substitute for a human eligibility determination.
-2. **DV data is segregated, not just masked.** Under VAWA, victim-service-provider client
-   data does **not** enter the shared HMIS at all — a separate comparable database holds
-   it and shares only de-identified/aggregate data. The invariant is *segregation*, not
-   *geofence the location*.
-3. **HUD standards are the floor.** Conform first; add cryptography underneath.
-4. **Reduce friction or don't ship it.** If a feature slows an intake, it fails the
-   dignity test. One-click attestations, pre-filled consent, automated reporting.
-5. **Private tamper-evident audit — not a public blockchain.** Moloch MMR stays a private
+1. **Humans attest; AI assists.** An AI classifier may flag a likely deficiency, pre-fill
+   a severity level, or surface a data-quality warning — it never issues a Seal on its
+   own. A credentialed human inspector of record must attest to every finding before the
+   Seal is issued (`inspection.dual_attestation` — inspector + reviewer sign-off). No
+   confidence score substitutes for that attestation.
+2. **HUD standards are the floor.** Conform to the NSPIRE deficiency taxonomy and
+   severity scale first; add cryptography underneath.
+3. **Reduce friction or don't ship it.** If a feature slows down an on-site inspection,
+   it fails the dignity test. One-tap evidence capture, pre-filled unit context,
+   automated report assembly.
+4. **Private tamper-evident audit — not a public blockchain.** Moloch MMR stays a private
    append-only log unless a specific cross-agency trust need justifies more.
-6. **Crypto honesty.** Pick one lane and state it. QSSM's post-quantum lattice claim and a
-   curve-based SNARK (e.g. Nova) are *different* trust models — a mobile PoC may choose
+5. **Crypto honesty.** Pick one lane and state it. QSSM's post-quantum lattice claim and
+   a curve-based SNARK (e.g. Nova) are *different* trust models — a mobile PoC may choose
    Nova, but then it is not post-quantum. Don't claim both.
 
 ---
 
 ## 8. Phased plan (each step ships value alone)
 
-1. **Extract the kernel** from `demo/` + `core/` into `@sovereign/kernel`.
-2. **Write the Constitution** — encode consent scope + ROI expiry + DV segregation +
-   human-in-the-loop (seeded in `/constitution` — see `charter.example.yaml`).
-3. **Wrap one HMIS write path** (enrollment) as an Intent through the kernel.
-4. **Audit everything** — every record mutation hashes into the MMR.
-5. **One ZK predicate** — scope the first proof to a single, cleanly-provable claim, e.g.
-   *"chronically homeless ≥ 12 months"* attestation — not a vague "prove eligibility."
-6. **Issue the client Seal** for that one credential.
-7. **Report attestation** — APR/LSA carries an MMR root proving integrity.
+1. **Extract the kernel** from `demo/` + `core/` into `src/kernel/` (this pass), later
+   promoted to a standalone `@sovereign/kernel` package.
+2. **Write the Constitution** for this domain — encode evidence immutability, chain of
+   custody, inspector credentialing, dual attestation (seeded in `/constitution` — see
+   `charter.housing-inspection.example.yaml`).
+3. **Wrap one Housing write path** (submit inspection evidence) as an Intent through the
+   kernel.
+4. **Audit everything** — every evidence submission hashes into the MMR.
+5. **One ZK/hash predicate** — scope the first proof to a single, cleanly-provable claim,
+   e.g. *"this evidence hash matches what the inspector captured on-device"* — not a
+   vague "prove the unit passed."
+6. **Issue the evidence Seal** for that one submission.
+7. **Report attestation** — the deficiency/scoring report carries an MMR root proving
+   integrity.
 
 ---
 
-## 9. Open reconciliation points (need the `Sovereign-Dignity` repo)
+## 9. Open reconciliation points
 
-- Its **stack** (Node/Rails/Django/…): decides how `/domain-hmis` plugs into the kernel.
-- Whether its **data model already conforms to HUD standards**: decides adapt-vs-wrap.
-- Existing **consent / ROI handling**: maps to Constitution invariants or replaces them.
-- **Auth & tenancy** (multi-agency / CoC): the actor model the kernel gate keys off.
+Resolved this pass (from `Sovereign-Dignity`'s accepted ADRs):
+- **Stack**: Rust backend services (api-gateway, ledger, verifier, report-generator),
+  React Native mobile (Inspector Mobile), Supabase (Postgres + auth + storage),
+  spec-first development (OpenAPI, JSON Schema, AsyncAPI, TLA+, Alloy).
+- **Existing consent/ROI handling**: not applicable — no client PII/eligibility
+  semantics in this domain; drop that reconciliation concern entirely.
+
+Still open:
+- **NSPIRE deficiency taxonomy mapping** — the exact field-level mapping from HUD's
+  NSPIRE standard categories/severity levels into `packages/shared-types` needs a pass
+  against the actual published standard, not just this spec's summary.
+- **Auth & tenancy** (multi-PHA / property-owner scoping): the actor model the kernel
+  gate keys off.
+- **Dual-attestation workflow**: who the "reviewer" role is (peer inspector? supervisor?)
+  and how that maps to `CapabilityRegistration.actions`.
 
 ---
 
 ## 10. Risks
 
-- **Procurement/certification reality** — becoming a CoC's system of record is a
-  selection + HUD-comparability process, not just a deploy.
-- **ZK proving cost/latency** — batch, server-side, cache; must not slow intake.
-- **Governance of the Constitution** — CoC + legal own the rules, not engineers alone.
-- **Scope creep** — resist fusing the AEC and HMIS surfaces; the kernel is the only thing
-  they share.
+- **Procurement/certification reality** — becoming a HUD-recognized inspection system
+  is a certification + comparability process, not just a deploy.
+- **Proving cost/latency** — batch, on-device where possible, cache; must not slow down
+  an on-site inspection.
+- **Governance of the Constitution** — HUD guidance + legal own the rules, not engineers
+  alone.
+- **Scope creep** — resist fusing the AEC and Housing surfaces; the kernel is the only
+  thing they share.
