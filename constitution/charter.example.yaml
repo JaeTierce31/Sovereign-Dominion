@@ -1,0 +1,84 @@
+# Illustrative charter sketch — NOT legally reviewed.
+# The kernel loads a charter and checks every Intent against it in the gate.
+# Predicates are written against the Intent + subject/consent context the kernel
+# resolves. Field names are indicative; they bind to the real model during the
+# Sovereign-Dignity reconciliation.
+
+charter:
+  id: dignity.base
+  version: 0.1.0-draft
+  domain: hmis
+
+invariants:
+
+  - id: consent.roi_scope
+    rationale: >
+      Data may only be shared for agencies and data categories the client's Release of
+      Information explicitly covers.
+    appliesWhen: "action == 'enrollment.share' || action == 'record.read.cross_agency'"
+    mustHold: "intent.recipient in subject.consent.roi.agencies
+               && intent.categories subsetOf subject.consent.roi.categories"
+    onViolation: block
+
+  - id: consent.expiry
+    rationale: "A share is invalid once the ROI has expired or been revoked."
+    appliesWhen: "action == 'enrollment.share' || action == 'record.read.cross_agency'"
+    mustHold: "subject.consent.roi.status == 'active'
+               && now() < subject.consent.roi.expiresAt"
+    onViolation: block
+
+  - id: dv.segregation
+    rationale: >
+      VAWA: victim-service-provider client records never enter the shared HMIS store.
+      Only de-identified / aggregate data may cross. Segregation, not masking.
+    appliesWhen: "subject.provider.type == 'victim_service'"
+    mustHold: "intent.store != 'shared_hmis'
+               && (intent.disclosure == none || intent.disclosure == 'deidentified_aggregate')"
+    onViolation: block
+
+  - id: hitl.eligibility_determination
+    rationale: >
+      A person's eligibility for housing or benefits is determined by a human. No AI
+      confidence score (phi-harmony or otherwise) may stand in for that determination.
+    appliesWhen: "action == 'eligibility.determine' || action == 'coordinated_entry.prioritize'"
+    mustHold: "intent.determinedBy.kind == 'human'
+               && intent.aiRecommendation.role == 'advisory'
+               && intent.aiRecommendation.overridable == true"
+    onViolation: block
+
+  - id: part2.substance_use
+    rationale: "42 CFR Part 2 — substance-use treatment records require specific consent."
+    appliesWhen: "intent.categories contains 'substance_use'"
+    mustHold: "subject.consent.part2.granted == true
+               && intent.purpose in subject.consent.part2.purposes"
+    onViolation: block
+
+  - id: minor.guardian_consent
+    rationale: "Sharing a minor's data requires guardian consent."
+    appliesWhen: "subject.age < 18 && action == 'enrollment.share'"
+    mustHold: "subject.consent.guardian.granted == true"
+    onViolation: block
+
+  - id: retention.limit
+    rationale: "Data past its retention window must be purged (right to be forgotten)."
+    appliesWhen: "action == 'record.read' || action == 'record.share'"
+    mustHold: "now() < subject.record.retainUntil"
+    onViolation: rollback
+
+  - id: audit.append_only
+    rationale: "The audit log is tamper-evident and append-only; deletions are recorded."
+    appliesWhen: "action startsWith 'audit.'"
+    mustHold: "action == 'audit.append'"
+    onViolation: block
+
+  - id: purpose_limitation
+    rationale: "Every access is bound to a single declared, logged purpose."
+    appliesWhen: "action == 'record.read' || action == 'record.share'"
+    mustHold: "intent.purpose != null && intent.purpose in allowedPurposes(intent.actor.role)"
+    onViolation: block
+
+# Notes:
+# - onViolation: block  → Intent refused before execution (gate).
+# - onViolation: rollback → post-condition drift; self-healing runtime rewinds to the
+#   last verified-safe state (same engine as the demo's self-healing panel).
+# - Domain modules may register additional invariants; they compose over this base.
