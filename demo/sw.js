@@ -1,6 +1,6 @@
 // Sovereign Dominion — Service Worker
 // Cache version: bump this string whenever assets change to invalidate old caches.
-const CACHE = 'sd-demo-v6';
+const CACHE = 'sd-demo-v7';
 
 // Pre-cached on install — all local demo assets
 const PRECACHE = [
@@ -8,6 +8,8 @@ const PRECACHE = [
   './index.html',
   './app.css',
   './manifest.json',
+  './logo.png',
+  './logo-256.png',
   './certificate.js',
   './confetti.js',
   './council-demo.js',
