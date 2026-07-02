@@ -7,6 +7,7 @@ export { Constitution, defineInvariant } from './invariant.js';
 export { CapabilityRegistry } from './capability-registry.js';
 export { AuditLog } from './audit.js';
 export { prove, verify } from './proof.js';
+export { hashIntegrityResolver, composeResolvers } from './proof-resolvers.js';
 export { issueSeal, verifySeal } from './seal.js';
 export { SelfHealingEngine } from './self-healing.js';
 export { createKernel } from './pipeline.js';

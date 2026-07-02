@@ -214,9 +214,14 @@ The kernel is **additive**; it never replaces the HUD-mandated inspection standa
 4. **Audit everything** — every evidence submission hashes into the MMR (the reference
    integration's `AuditLog` proves the shape; swapping in the real Moloch MMR is still
    owed, see §7 point 4 above).
-5. **One ZK/hash predicate** — scope the first proof to a single, cleanly-provable claim,
-   e.g. *"this evidence hash matches what the inspector captured on-device"* — not a
-   vague "prove the unit passed."
+5. **One ZK/hash predicate** — done as an honest hash-integrity check:
+   `kernel/src/proof-resolvers.js`'s `hashIntegrityResolver` proves exactly the claim
+   *"this evidence hash matches what the inspector captured on-device"* at the kernel's
+   VERIFY step, with the raw bytes kept OUT of the shared Intent (they stay on-device;
+   `kernel/test/verify-step.test.mjs` asserts they never reach the audit record). Clearly
+   labeled `scheme: 'sha256-integrity/in-process'` — real SHA-256, but an in-process
+   integrity check, not yet a transferable/zero-knowledge proof. Swapping in a real ZK
+   scheme (QSSM lattice / a SNARK) per §7 point 5 is the remaining crypto upgrade.
 6. **Issue the evidence Seal** for that one submission.
 7. **Report attestation** — the deficiency/scoring report carries an MMR root proving
    integrity.
