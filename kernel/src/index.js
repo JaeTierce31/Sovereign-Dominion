@@ -1,6 +1,6 @@
 // @sovereign/kernel — the domain-agnostic verification kernel.
 // Intent → Gate → Verify → Execute → Observe → Seal.
-// Shared by Sovereign Dominion (AEC) and Sovereign Dignity (HMIS).
+// Shared by Sovereign Dominion (AEC) and Sovereign Dignity (Housing / HUD NSPIRE).
 
 export { createIntent } from './intent.js';
 export { Constitution, defineInvariant } from './invariant.js';
@@ -11,3 +11,4 @@ export { issueSeal, verifySeal } from './seal.js';
 export { SelfHealingEngine } from './self-healing.js';
 export { createKernel } from './pipeline.js';
 export { hash, stableStringify } from './hash.js';
+export { compileCharter, compileInvariant, compilePredicate } from './charter-compiler.js';

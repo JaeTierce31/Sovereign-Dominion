@@ -199,10 +199,21 @@ The kernel is **additive**; it never replaces the HUD-mandated inspection standa
    package at `/kernel` — done (PR #16); this pass corrects its domain framing.
 2. **Write the Constitution** for this domain — encode evidence immutability, chain of
    custody, inspector credentialing, dual attestation (seeded in `/constitution` — see
-   `charter.housing-inspection.example.yaml`).
+   `charter.housing-inspection.example.yaml`) — done. The charter is no longer just a
+   design sketch: `kernel/src/charter-compiler.js` compiles its `appliesWhen`/`mustHold`
+   strings into real, safe predicate functions (a hand-written parser + interpreter, no
+   `eval`), proven against both charter files in `kernel/test/charter-compiler.test.mjs`.
 3. **Wrap one Housing write path** (submit inspection evidence) as an Intent through the
-   kernel.
-4. **Audit everything** — every evidence submission hashes into the MMR.
+   kernel — done as a reference integration: `kernel/test/housing-domain.integration.test.mjs`
+   drives the real `createKernel()` pipeline, invariants loaded straight from
+   `charter.housing-inspection.example.yaml`, against an in-memory evidence store —
+   chained submissions seal, a tampered `previousHash` blocks, an expired inspector
+   credential blocks, and a finalize that downgrades a life-threatening finding is caught
+   even with valid dual attestation. Still owed: the real `services/ledger` (Rust, per
+   `Sovereign-Dignity`'s ADR-001) replacing the in-memory store.
+4. **Audit everything** — every evidence submission hashes into the MMR (the reference
+   integration's `AuditLog` proves the shape; swapping in the real Moloch MMR is still
+   owed, see §7 point 4 above).
 5. **One ZK/hash predicate** — scope the first proof to a single, cleanly-provable claim,
    e.g. *"this evidence hash matches what the inspector captured on-device"* — not a
    vague "prove the unit passed."

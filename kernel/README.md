@@ -37,24 +37,28 @@ Nothing bypasses the gate. AEC and Housing differ only in the *handlers* and
 | `seal.js` | `issueSeal`/`verifySeal` — the portable, subject-held credential. |
 | `self-healing.js` | Rewinds to the last verified-safe state (enforces `onViolation: "rollback"`). |
 | `pipeline.js` | `createKernel` — wires the loop together. |
+| `charter-compiler.js` | Compiles a charter YAML's `appliesWhen`/`mustHold` strings (see [`constitution/`](../constitution/)) into real, safe predicate functions — no `eval`/`new Function`, a hand-written parser + tree-walking interpreter over a restricted expression grammar. |
 
 ## How a domain plugs in
 
-```js
-import { Constitution, defineInvariant, CapabilityRegistry, AuditLog, createKernel, createIntent } from '@sovereign/kernel';
+The charter is authored once, in YAML, and compiled straight into invariants —
+you don't hand-write `defineInvariant` calls for each rule:
 
-const constitution = new Constitution([
-  defineInvariant({
-    id: 'inspector.credential_valid',
-    appliesWhen: ({ intent }) => intent.action === 'inspection.submit_evidence',
-    mustHold:   ({ intent, now }) => intent.actor.credential.status === 'active' && now() < intent.actor.credential.expiresAt,
-    onViolation: 'block',
-  }),
-]);
+```js
+import { load } from 'js-yaml'; // or any YAML parser — compileCharter takes the parsed object
+import { readFileSync } from 'node:fs';
+import { Constitution, CapabilityRegistry, AuditLog, createKernel, createIntent, compileCharter } from '@sovereign/kernel';
+
+const charterObj = load(readFileSync('constitution/charter.housing-inspection.example.yaml', 'utf8'));
+const NSPIRE_ORDINALS = { low: 0, moderate: 1, severe: 2, life_threatening: 3 };
+const { invariants } = compileCharter(charterObj, { ordinals: NSPIRE_ORDINALS });
+
+const constitution = new Constitution(invariants);
 
 const registry = new CapabilityRegistry().register({
   domain: 'housing',
   actions: [{ name: 'inspection.submit_evidence', handler: (intent) => submitEvidence(intent) }],
+  invariants, // recorded on the registry for introspection; the gate itself checks `constitution` above
 });
 
 const kernel = createKernel({ constitution, registry, audit: new AuditLog() });
@@ -62,28 +66,35 @@ const result = await kernel.submitIntent(createIntent({ /* actor, subject, actio
 // → { status: 'sealed' | 'blocked' | 'proof_failed' | 'no_handler' | 'error', … }
 ```
 
-See `test/kernel.test.mjs` for a runnable end-to-end example (valid evidence
-submission sealed, expired-credential submission blocked, single-attestation
-finalize blocked, audit tamper detected, self-healing rewind).
+See `test/kernel.test.mjs` for the hand-written-invariant version of this
+end-to-end example (valid evidence submission sealed, expired-credential
+submission blocked, single-attestation finalize blocked, audit tamper
+detected, self-healing rewind), and `test/charter-compiler.test.mjs` for the
+charter-compiled version — same scenarios, invariants loaded straight from
+the YAML instead of hand-written, including a check that severity comparisons
+use NSPIRE's ordinal rank rather than lexicographic string order.
 
 ```bash
-npm test   # or: node test/kernel.test.mjs
+npm install   # pulls in the js-yaml devDependency the charter-compiler test uses
+npm test      # runs both test/kernel.test.mjs and test/charter-compiler.test.mjs
 ```
 
 ## Status & what binds next
 
-This is the **skeleton** — the seam and orchestration are real; three pieces are
-mocks with clear swap points:
+This is the **skeleton** — the seam and orchestration are real; two pieces are
+still mocks with clear swap points:
 
 1. **`proof.js`** → bind to QSSM (`core/qssm-rs`) or a chosen SNARK. Crypto honesty:
    post-quantum lattice and a curve-based SNARK are different trust models — pick one
    per deployment and record it (don't claim both).
 2. **`audit.js` / `hash.js`** → bind to the real Moloch MMR (`core/moloch-mmr`) for
-   production roots.
-3. **`invariant.js`** → invariants are compiled predicate functions today; the
-   human-authored charter lives in [`constitution/`](../constitution/) —
-   currently `charter.housing-inspection.example.yaml`. A charter → predicate
-   compiler is the remaining seam.
+   production roots. `charter-compiler.js`'s built-in `sha256(x)` predicate function
+   is bound to this same placeholder `hash()` today — swap both together.
+
+The charter → predicate compiler (previously the "remaining seam") is done:
+[`charter-compiler.js`](src/charter-compiler.js) turns
+[`constitution/`](../constitution/)'s YAML into real invariants; see
+`test/charter-compiler.test.mjs`.
 
 The Housing domain (`/domain-housing`) is authored against the actual
 `Sovereign-Dignity` repo; it registers NSPIRE-conformant actions + the full charter here.

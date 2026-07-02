@@ -1,7 +1,7 @@
 {
   "name": "@sovereign/kernel",
   "version": "0.1.0",
-  "description": "Domain-agnostic verification kernel: Intent → Gate → Verify → Execute → Observe → Seal. Shared by Sovereign Dominion (AEC) and Sovereign Dignity (HMIS).",
+  "description": "Domain-agnostic verification kernel: Intent → Gate → Verify → Execute → Observe → Seal. Shared by Sovereign Dominion (AEC) and Sovereign Dignity (Housing / HUD NSPIRE).",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -9,7 +9,10 @@
   },
   "files": ["src"],
   "scripts": {
-    "test": "node test/kernel.test.mjs"
+    "test": "node test/kernel.test.mjs && node test/charter-compiler.test.mjs && node test/housing-domain.integration.test.mjs"
+  },
+  "devDependencies": {
+    "js-yaml": "^5.2.1"
   },
   "license": "MIT"
 }
