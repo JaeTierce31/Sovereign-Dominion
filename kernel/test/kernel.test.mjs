@@ -11,79 +11,83 @@ let passed = 0;
 const ok = (name) => { console.log(`  ✓ ${name}`); passed++; };
 
 // ── A tiny slice of the Constitution (compiled from /constitution) ──────────
+// Housing (HUD NSPIRE) domain — see constitution/charter.housing-inspection.example.yaml.
 const constitution = new Constitution([
   defineInvariant({
-    id: 'consent.expiry',
-    rationale: 'A share is invalid once the ROI has expired or been revoked.',
-    appliesWhen: ({ intent }) => intent.action === 'enrollment.share',
+    id: 'inspector.credential_valid',
+    rationale: 'Only a currently-active, HUD NSPIRE-certified inspector may submit evidence.',
+    appliesWhen: ({ intent }) => intent.action === 'inspection.submit_evidence',
     mustHold: ({ intent, now }) =>
-      intent.subject?.consent?.status === 'active' && now() < intent.subject.consent.expiresAt,
+      intent.actor?.credential?.status === 'active' && now() < intent.actor.credential.expiresAt,
     onViolation: 'block',
   }),
   defineInvariant({
-    id: 'hitl.eligibility_determination',
-    rationale: 'A human determines eligibility; AI is advisory only.',
-    appliesWhen: ({ intent }) => intent.action === 'eligibility.determine',
-    mustHold: ({ intent }) => intent.payload?.determinedBy === 'human',
+    id: 'inspection.dual_attestation',
+    rationale: 'No Seal issues on one inspector\'s word alone — AI severity flags are advisory only.',
+    appliesWhen: ({ intent }) => intent.action === 'inspection.finalize',
+    mustHold: ({ intent }) =>
+      Array.isArray(intent.payload?.attestations) &&
+      intent.payload.attestations.length >= 2 &&
+      intent.payload.attestations.every((a) => a.kind === 'human'),
     onViolation: 'block',
   }),
 ]);
 
 // ── A domain plugs in by registering actions (+ its own invariants) ─────────
 const registry = new CapabilityRegistry();
-let shared = null;
+let submittedUnit = null;
 registry.register({
-  domain: 'hmis',
+  domain: 'housing',
   actions: [
-    { name: 'enrollment.share', handler: (intent) => { shared = intent.subject.id; return { shared: true }; } },
-    { name: 'eligibility.determine', handler: () => ({ determined: true }) },
+    { name: 'inspection.submit_evidence', handler: (intent) => { submittedUnit = intent.subject.id; return { submitted: true }; } },
+    { name: 'inspection.finalize', handler: () => ({ finalized: true }) },
   ],
 });
 
 const audit = new AuditLog();
 const kernel = createKernel({ constitution, registry, audit });
 
-// ── 1. Valid share → sealed ─────────────────────────────────────────────────
+// ── 1. Valid evidence submission → sealed ───────────────────────────────────
 {
   const intent = createIntent({
-    actor: { id: 'cw-1', role: 'caseworker' },
-    subject: { id: 'client-abc', consent: { status: 'active', expiresAt: Date.now() + 1e7 } },
-    action: 'enrollment.share', domain: 'hmis', purpose: 'coordinated_entry',
+    actor: { id: 'insp-1', role: 'inspector', credential: { status: 'active', expiresAt: Date.now() + 1e7 } },
+    subject: { id: 'unit-abc' },
+    action: 'inspection.submit_evidence', domain: 'housing', purpose: 'nspire_inspection',
   });
   const r = await kernel.submitIntent(intent);
   assert.equal(r.status, 'sealed');
   assert.ok(verifySeal(r.seal), 'seal verifies');
-  assert.equal(shared, 'client-abc', 'domain handler ran');
-  ok('valid enrollment.share is gated, executed, and sealed');
+  assert.equal(submittedUnit, 'unit-abc', 'domain handler ran');
+  ok('valid inspection.submit_evidence is gated, executed, and sealed');
 }
 
-// ── 2. Expired consent → blocked before it executes ─────────────────────────
+// ── 2. Expired inspector credential → blocked before it executes ────────────
 {
-  shared = null;
+  submittedUnit = null;
   const intent = createIntent({
-    actor: { id: 'cw-1', role: 'caseworker' },
-    subject: { id: 'client-xyz', consent: { status: 'active', expiresAt: Date.now() - 1 } },
-    action: 'enrollment.share', domain: 'hmis',
+    actor: { id: 'insp-1', role: 'inspector', credential: { status: 'active', expiresAt: Date.now() - 1 } },
+    subject: { id: 'unit-xyz' },
+    action: 'inspection.submit_evidence', domain: 'housing',
   });
   const r = await kernel.submitIntent(intent);
   assert.equal(r.status, 'blocked');
-  assert.equal(r.violations[0].id, 'consent.expiry');
-  assert.equal(shared, null, 'handler never ran');
-  ok('expired-consent share is blocked at the gate (handler never runs)');
+  assert.equal(r.violations[0].id, 'inspector.credential_valid');
+  assert.equal(submittedUnit, null, 'handler never ran');
+  ok('expired-credential submission is blocked at the gate (handler never runs)');
 }
 
-// ── 3. AI-only eligibility determination → blocked (human-in-the-loop) ───────
+// ── 3. Single-attestation finalize → blocked (dual attestation required) ────
 {
   const intent = createIntent({
-    actor: { id: 'svc', role: 'system' },
-    subject: { id: 'client-abc' },
-    action: 'eligibility.determine', domain: 'hmis',
-    payload: { determinedBy: 'ai' },
+    actor: { id: 'insp-1', role: 'inspector' },
+    subject: { id: 'unit-abc' },
+    action: 'inspection.finalize', domain: 'housing',
+    payload: { attestations: [{ actorId: 'insp-1', kind: 'human' }] },
   });
   const r = await kernel.submitIntent(intent);
   assert.equal(r.status, 'blocked');
-  assert.equal(r.violations[0].id, 'hitl.eligibility_determination');
-  ok('AI-only eligibility determination is blocked (humans decide)');
+  assert.equal(r.violations[0].id, 'inspection.dual_attestation');
+  ok('single-attestation finalize is blocked (dual human attestation required)');
 }
 
 // ── 4. Audit is tamper-evident ──────────────────────────────────────────────
