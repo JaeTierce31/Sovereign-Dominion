@@ -3,7 +3,10 @@
 // the underlying private data. For Housing (NSPIRE) this is the inspector- or
 // owner-held proof that a unit's inspection evidence was verified and sealed.
 //
-// Skeleton signature is a mock hash. Production signs with the issuer key and,
+// Skeleton signature: a real SHA-256 (hash.js) of the seal body keyed with a
+// hardcoded shared string — the hash itself is real, but this is not a real
+// signature scheme (no issuer keypair, no asymmetric crypto, so anyone with
+// this source can forge one). Production signs with a real issuer key and,
 // for selective disclosure, wraps a real proof (QSSM / BBS+ / SNARK).
 
 import { hash } from './hash.js';

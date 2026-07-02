@@ -229,7 +229,7 @@ function looseEquals(a, b) {
   return a === b;
 }
 
-/** sha256(x) — mock, bound to hash.js's placeholder (same swap point as proof.js/audit.js). */
+/** sha256(x) in charter predicates — bound to hash.js's real SHA-256. */
 function sha256Builtin(x) { return hash(x); }
 
 function allBuiltin(arr, pred) { return Array.isArray(arr) && arr.every((x) => truthy(pred(x))); }

@@ -34,6 +34,7 @@ Nothing bypasses the gate. AEC and Housing differ only in the *handlers* and
 | `capability-registry.js` | Domains register their actions (handlers) + invariants. |
 | `proof.js` | ZK `prove`/`verify` a predicate over a private witness — no witness leaves. |
 | `audit.js` | `AuditLog` — append-only, tamper-evident (skeleton MMR; binds to `core/moloch-mmr`). |
+| `hash.js` | Real SHA-256 (FIPS 180-4), dependency-free and synchronous — the primitive `audit.js`, `seal.js`, and `charter-compiler.js`'s `sha256()` builtin all use. |
 | `seal.js` | `issueSeal`/`verifySeal` — the portable, subject-held credential. |
 | `self-healing.js` | Rewinds to the last verified-safe state (enforces `onViolation: "rollback"`). |
 | `pipeline.js` | `createKernel` — wires the loop together. |
@@ -81,15 +82,21 @@ npm test      # runs both test/kernel.test.mjs and test/charter-compiler.test.mj
 
 ## Status & what binds next
 
-This is the **skeleton** — the seam and orchestration are real; two pieces are
-still mocks with clear swap points:
+This is the **skeleton** — the seam and orchestration are real; one piece is
+still a mock with a clear swap point:
 
 1. **`proof.js`** → bind to QSSM (`core/qssm-rs`) or a chosen SNARK. Crypto honesty:
    post-quantum lattice and a curve-based SNARK are different trust models — pick one
    per deployment and record it (don't claim both).
-2. **`audit.js` / `hash.js`** → bind to the real Moloch MMR (`core/moloch-mmr`) for
-   production roots. `charter-compiler.js`'s built-in `sha256(x)` predicate function
-   is bound to this same placeholder `hash()` today — swap both together.
+
+**`hash.js` is real SHA-256** (FIPS 180-4, dependency-free, verified against NIST
+test vectors and fuzzed against `node:crypto` across every padding-boundary length
+— see `test/hash.test.mjs`), not a placeholder anymore. `charter-compiler.js`'s
+`sha256(x)` predicate builtin and `seal.js`'s signature both use it. What's left on
+the audit side: `audit.js`'s chain structure is still a simple hash-chain, not the
+real Moloch Merkle Mountain Range (`core/moloch-mmr`, a separate Rust/WASM crate
+with its own, still-mocked, non-SHA-256 internal hashing) — the *primitive* is now
+real, the *structure* swap is future work.
 
 The charter → predicate compiler (previously the "remaining seam") is done:
 [`charter-compiler.js`](src/charter-compiler.js) turns
