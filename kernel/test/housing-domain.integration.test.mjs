@@ -170,6 +170,29 @@ function evidenceIntent(unitId, evidenceBytes) {
   ok('finalize that downgrades a life-threatening finding is blocked, dual attestation notwithstanding');
 }
 
+// ── 6b. Finalize with a MALFORMED severity string → blocked (fail-closed) ──
+// A typo'd or adversarial severity that isn't a real NSPIRE level must not
+// slip through by comparing lexicographically (`'zzz' >= 'life_threatening'`
+// is true as raw strings). The gate must fail closed: the compiled
+// `deficiency.severity_disclosure` predicate throws on the unknown value, and
+// the kernel treats a throwing invariant as a violation → Intent blocked.
+{
+  const intent = createIntent({
+    actor: inspector(),
+    subject: { id: 'unit-abc' },
+    action: 'inspection.finalize',
+    domain: 'housing',
+    payload: {
+      deficiencies: [{ recordedSeverity: 'zzz_not_a_real_level', evidenceImpliedSeverity: 'life_threatening' }],
+      attestations: [{ actorId: 'insp-1', kind: 'human' }, { actorId: 'insp-2', kind: 'human' }],
+    },
+  });
+  const r = await kernel.submitIntent(intent);
+  assert.equal(r.status, 'blocked', 'a malformed severity must fail closed, not slip through lexicographically');
+  assert.equal(r.violations.map((v) => v.id).includes('deficiency.severity_disclosure'), true);
+  ok('finalize with a malformed/unknown severity string is blocked (fails closed, no lexicographic bypass)');
+}
+
 // ── 7. The whole run left a tamper-evident trail ────────────────────────────
 {
   assert.equal(audit.verify(), true);

@@ -239,7 +239,27 @@ function makeEvaluator(ordinals) {
   function compareOrdinal(l, r, op) {
     let lv = l;
     let rv = r;
-    if (ordinals && typeof l === 'string' && typeof r === 'string' && l in ordinals && r in ordinals) {
+    // When ordinals are configured and BOTH operands are strings, the
+    // comparison is a ranked-enum comparison (e.g. NSPIRE severity) and each
+    // operand MUST be a known member. If either isn't, we FAIL CLOSED (throw)
+    // rather than silently falling back to lexicographic string order.
+    //
+    // The lexicographic fallback was a real, safety-critical fail-OPEN:
+    // `'lo' >= 'life_threatening'` is `true` lexically ('lo' > 'li'), so a
+    // malformed or adversarial `recordedSeverity` could satisfy a
+    // `recordedSeverity >= evidenceImpliedSeverity` disclosure gate and let a
+    // downgraded/mis-typed life-threatening deficiency through. The throw is
+    // caught by the gate (invariant.js treats a throwing `mustHold` as a
+    // violation), so an unrecognized severity blocks the Intent — the safe
+    // outcome. Mixed-type comparisons (e.g. `now() < expiresAt` where one side
+    // is a number) are unaffected: they don't enter this branch.
+    if (ordinals && typeof l === 'string' && typeof r === 'string') {
+      if (!(l in ordinals) || !(r in ordinals)) {
+        throw new Error(
+          `ordinal comparison of unknown value(s): ${JSON.stringify(l)} vs ${JSON.stringify(r)} ` +
+            `— not in the configured ordinal map {${Object.keys(ordinals).join(', ')}}`
+        );
+      }
       lv = ordinals[l];
       rv = ordinals[r];
     }
@@ -327,12 +347,28 @@ function makeEvaluator(ordinals) {
  * @param {object} [options]
  * @param {Record<string, number>} [options.ordinals]  named ranks for
  *   otherwise-unordered string values (e.g. NSPIRE severity), so `<`/`>=`
- *   compare by rank instead of falling back to lexicographic string order.
+ *   compare by rank instead of lexicographic string order. In this mode a
+ *   string-vs-string comparison where either side is NOT a known member
+ *   throws (fails closed via the gate) rather than silently comparing
+ *   lexicographically — see compareOrdinal.
  * @param {Record<string, Function>} [options.functions]  extra callables
  *   made available to the expression alongside the built-in `now`, `sha256`,
  *   `all`, `any` (e.g. a domain's `allowedPurposes`).
  */
+const MAX_PREDICATE_LENGTH = 2000;
+
 export function compilePredicate(source, options = {}) {
+  if (typeof source !== 'string') {
+    throw new TypeError('predicate source must be a string');
+  }
+  // Defense-in-depth: bound parser work. The recursive-descent parser recurses
+  // on nesting depth, so a pathological deeply-nested charter string could
+  // otherwise overflow the stack. Real invariants are well under 200 chars;
+  // 2000 is generous headroom while still refusing adversarial input with a
+  // clear message instead of a RangeError.
+  if (source.length > MAX_PREDICATE_LENGTH) {
+    throw new Error(`predicate too long (${source.length} chars; limit ${MAX_PREDICATE_LENGTH})`);
+  }
   const ast = parse(tokenize(source), source);
   const evaluate = makeEvaluator(options.ordinals);
   return function evaluatePredicate(ctx) {
