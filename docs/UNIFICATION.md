@@ -12,11 +12,15 @@ backend ledger/verifier services. Everything below the "Kernel" line is authorit
 everything in the "Domain" line is a contract the housing-inspection app must satisfy,
 not a claim about what it currently does.
 
-**Implementation note:** the first real, typed kernel code landed this pass at
-`src/kernel/` (inside the existing app, so it's covered by the current `tsconfig.json` /
-`vitest.config.ts` / `eslint.config.js` scope without touching build config). Promotion
-to the standalone `/kernel` package (`@sovereign/kernel`) described in §5 is future work,
-once it's ready to be published and consumed by more than one repo.
+**Implementation note:** the first real, typed kernel code already landed as the
+standalone `/kernel` package (`@sovereign/kernel`, PR #16) — a pure,
+framework-neutral JS module (no DOM, no backend, no build step) implementing the
+`Intent → Gate → Verify → Execute → Observe → Seal` loop, with a runnable
+smoke test at `kernel/test/kernel.test.mjs`. It was written against the earlier,
+incorrect homeless-services domain guess; this pass corrects its domain-flavored
+comments, README, and test fixtures to the NSPIRE housing-inspection domain
+below, without changing the mechanism (gate/verify/execute/observe/seal), which
+was already domain-agnostic.
 
 ---
 
@@ -114,8 +118,8 @@ interface CapabilityRegistration {
 }
 ```
 
-**Kernel loop** (the first real implementation lands this pass in `src/kernel/`,
-generalizing the `demo/` prototypes' Intent → ExecutionGraph + self-healing runtime):
+**Kernel loop** (implemented in `/kernel` — `@sovereign/kernel` — generalizing the
+`demo/` prototypes' Intent → ExecutionGraph + self-healing runtime):
 
 ```
 submitIntent(intent)
@@ -142,8 +146,9 @@ submitIntent(intent)
 /reference      the beam demo, kept as a proof-of-kernel + marketing artifact
 ```
 
-The current `demo/` remains `/reference` (proof that the kernel works end-to-end);
-`core/` (qssm-rs, moloch-mmr) plus the new `src/kernel/` are the seed of `/kernel`.
+The current `demo/` remains `/reference` (proof that the kernel works end-to-end).
+`/kernel` (`@sovereign/kernel`) already exists per this layout; `core/` (qssm-rs,
+moloch-mmr) are the real-crypto swap points its `proof.js`/`audit.js` mocks point at.
 
 ---
 
@@ -190,14 +195,25 @@ The kernel is **additive**; it never replaces the HUD-mandated inspection standa
 
 ## 8. Phased plan (each step ships value alone)
 
-1. **Extract the kernel** from `demo/` + `core/` into `src/kernel/` (this pass), later
-   promoted to a standalone `@sovereign/kernel` package.
+1. **Extract the kernel** from `demo/` + `core/` into the standalone `@sovereign/kernel`
+   package at `/kernel` — done (PR #16); this pass corrects its domain framing.
 2. **Write the Constitution** for this domain — encode evidence immutability, chain of
    custody, inspector credentialing, dual attestation (seeded in `/constitution` — see
-   `charter.housing-inspection.example.yaml`).
+   `charter.housing-inspection.example.yaml`) — done. The charter is no longer just a
+   design sketch: `kernel/src/charter-compiler.js` compiles its `appliesWhen`/`mustHold`
+   strings into real, safe predicate functions (a hand-written parser + interpreter, no
+   `eval`), proven against both charter files in `kernel/test/charter-compiler.test.mjs`.
 3. **Wrap one Housing write path** (submit inspection evidence) as an Intent through the
-   kernel.
-4. **Audit everything** — every evidence submission hashes into the MMR.
+   kernel — done as a reference integration: `kernel/test/housing-domain.integration.test.mjs`
+   drives the real `createKernel()` pipeline, invariants loaded straight from
+   `charter.housing-inspection.example.yaml`, against an in-memory evidence store —
+   chained submissions seal, a tampered `previousHash` blocks, an expired inspector
+   credential blocks, and a finalize that downgrades a life-threatening finding is caught
+   even with valid dual attestation. Still owed: the real `services/ledger` (Rust, per
+   `Sovereign-Dignity`'s ADR-001) replacing the in-memory store.
+4. **Audit everything** — every evidence submission hashes into the MMR (the reference
+   integration's `AuditLog` proves the shape; swapping in the real Moloch MMR is still
+   owed, see §7 point 4 above).
 5. **One ZK/hash predicate** — scope the first proof to a single, cleanly-provable claim,
    e.g. *"this evidence hash matches what the inspector captured on-device"* — not a
    vague "prove the unit passed."

@@ -1,6 +1,6 @@
 // Intent — the one envelope every domain action flows through.
 // Generalized from Sovereign Dominion's demo/intent.js: no longer beam-specific,
-// so both the AEC and HMIS domains speak the same contract to the kernel.
+// so both the AEC and Housing (NSPIRE) domains speak the same contract to the kernel.
 
 let _seq = 0;
 
@@ -8,9 +8,9 @@ let _seq = 0;
  * @param {object} spec
  * @param {object} spec.actor         who is acting (role-scoped ref)
  * @param {object} spec.subject       whom/what it concerns (client, beam, record…)
- * @param {string} spec.action        e.g. "enrollment.share", "eligibility.attest"
- * @param {string} spec.domain        "hmis" | "aec" | …
- * @param {*}      [spec.payload]      domain data (HUD-conformant record for HMIS)
+ * @param {string} spec.action        e.g. "inspection.submit_evidence", "inspection.finalize"
+ * @param {string} spec.domain        "housing" | "aec" | …
+ * @param {*}      [spec.payload]      domain data (NSPIRE-conformant record for Housing)
  * @param {string[]} [spec.requiredProofs]  proof predicate ids the gate must verify
  * @param {string} [spec.purpose]     declared, logged purpose of the action
  */
