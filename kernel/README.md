@@ -33,6 +33,7 @@ Nothing bypasses the gate. AEC and Housing differ only in the *handlers* and
 | `invariant.js` | `Constitution` — machine-checkable invariants (the Dignity charter), checked in the gate. |
 | `capability-registry.js` | Domains register their actions (handlers) + invariants. |
 | `proof.js` | ZK `prove`/`verify` a predicate over a private witness — no witness leaves. |
+| `proof-resolvers.js` | Ready-made resolvers for the VERIFY step. `hashIntegrityResolver` confirms an integrity claim (bytes hash to the committed hash) using real SHA-256, with the witness bytes kept OUT of the shared Intent (on-device); `composeResolvers` chains them. |
 | `audit.js` | `AuditLog` — append-only, tamper-evident (skeleton MMR; binds to `core/moloch-mmr`). |
 | `hash.js` | Real SHA-256 (FIPS 180-4), dependency-free and synchronous — the primitive `audit.js`, `seal.js`, and `charter-compiler.js`'s `sha256()` builtin all use. |
 | `seal.js` | `issueSeal`/`verifySeal` — the portable, subject-held credential. |
