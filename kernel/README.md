@@ -34,9 +34,11 @@ Nothing bypasses the gate. AEC and Housing differ only in the *handlers* and
 | `capability-registry.js` | Domains register their actions (handlers) + invariants. |
 | `proof.js` | ZK `prove`/`verify` a predicate over a private witness — no witness leaves. |
 | `proof-resolvers.js` | Ready-made resolvers for the VERIFY step. `hashIntegrityResolver` confirms an integrity claim (bytes hash to the committed hash) using real SHA-256, with the witness bytes kept OUT of the shared Intent (on-device); `composeResolvers` chains them. |
-| `audit.js` | `AuditLog` — append-only, tamper-evident (skeleton MMR; binds to `core/moloch-mmr`). |
-| `hash.js` | Real SHA-256 (FIPS 180-4), dependency-free and synchronous — the primitive `audit.js`, `seal.js`, and `charter-compiler.js`'s `sha256()` builtin all use. |
-| `seal.js` | `issueSeal`/`verifySeal` — the portable, subject-held credential. |
+| `audit.js` | `AuditLog` — append-only, tamper-evident, backed by a real Merkle Mountain Range (`mmr.js`); gives O(log n) inclusion proofs (`proof`/`verifyInclusion`). |
+| `mmr.js` | `MerkleMountainRange`/`verifyMmrProof` — real MMR accumulator over SHA-256, domain-separated (leaf `0x00` / node `0x01`); stateless inclusion verification. |
+| `hash.js` | Real SHA-256 (FIPS 180-4), dependency-free and synchronous — the primitive `audit.js`/`mmr.js`, `seal.js`, and `charter-compiler.js`'s `sha256()` builtin all use. |
+| `ed25519.js` | `createEd25519Signer`/`verifyEd25519` — real Ed25519 signatures (native, synchronous); the KMS/HSM seam for the Seal signer. |
+| `seal.js` | `issueSeal`/`verifySeal` — the portable, subject-held credential, Ed25519-signed. |
 | `self-healing.js` | Rewinds to the last verified-safe state (enforces `onViolation: "rollback"`). |
 | `pipeline.js` | `createKernel` — wires the loop together. |
 | `charter-compiler.js` | Compiles a charter YAML's `appliesWhen`/`mustHold` strings (see [`constitution/`](../constitution/)) into real, safe predicate functions — no `eval`/`new Function`, a hand-written parser + tree-walking interpreter over a restricted expression grammar. |
@@ -78,26 +80,29 @@ use NSPIRE's ordinal rank rather than lexicographic string order.
 
 ```bash
 npm install   # pulls in the js-yaml devDependency the charter-compiler test uses
-npm test      # runs both test/kernel.test.mjs and test/charter-compiler.test.mjs
+npm test      # runs all 8 suites: hash, mmr, seal, kernel, charter-compiler(+security), verify-step, housing-integration
 ```
 
 ## Status & what binds next
 
-This is the **skeleton** — the seam and orchestration are real; one piece is
-still a mock with a clear swap point:
+The seam and orchestration are real, and Tier 1 of the roadmap made the trust real
+too. One piece is still a mock, with a clear swap point:
 
 1. **`proof.js`** → bind to QSSM (`core/qssm-rs`) or a chosen SNARK. Crypto honesty:
    post-quantum lattice and a curve-based SNARK are different trust models — pick one
-   per deployment and record it (don't claim both).
+   per deployment and record it (don't claim both). Deliberately scoped to Dominion/AEC
+   — the PII-free Housing path doesn't need ZK (see `docs/ROADMAP.md` §0).
 
 **`hash.js` is real SHA-256** (FIPS 180-4, dependency-free, verified against NIST
 test vectors and fuzzed against `node:crypto` across every padding-boundary length
-— see `test/hash.test.mjs`), not a placeholder anymore. `charter-compiler.js`'s
-`sha256(x)` predicate builtin and `seal.js`'s signature both use it. What's left on
-the audit side: `audit.js`'s chain structure is still a simple hash-chain, not the
-real Moloch Merkle Mountain Range (`core/moloch-mmr`, a separate Rust/WASM crate
-with its own, still-mocked, non-SHA-256 internal hashing) — the *primitive* is now
-real, the *structure* swap is future work.
+— see `test/hash.test.mjs`). The audit log is now backed by a **real Merkle Mountain
+Range** (`mmr.js`) over that primitive — domain-separated, with O(log n) inclusion
+proofs, exhaustively + fuzz-tested against adversarial forgery (`test/mmr.test.mjs`);
+it supersedes the mock `core/moloch-mmr` crate for the audit path. The Seal is signed
+with **real Ed25519** (`ed25519.js`) — genuine non-repudiation, no shared secret,
+trust-anchorable via `trustedPublicKeys` (`test/seal.test.mjs`). The remaining crypto
+gap is *key custody*: the signer generates an ephemeral dev key unless given a PEM —
+production must put a KMS/HSM behind the `createEd25519Signer` seam.
 
 The charter → predicate compiler (previously the "remaining seam") is done:
 [`charter-compiler.js`](src/charter-compiler.js) turns

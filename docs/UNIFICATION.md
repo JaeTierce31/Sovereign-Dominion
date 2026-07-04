@@ -2,7 +2,8 @@
 
 > This document is the **spec** (the intended design). For the current **status** — what
 > is actually built, what is an honest placeholder, and what is not yet built — see
-> [`PLATFORM.md`](PLATFORM.md).
+> [`PLATFORM.md`](PLATFORM.md). For the sequenced completion plan and the trust-model
+> decision, see [`ROADMAP.md`](ROADMAP.md).
 
 **Status:** Draft (kernel side), domain corrected. The domain layer was originally
 guessed at before the `Sovereign-Dignity` repository could be reviewed, and that guess

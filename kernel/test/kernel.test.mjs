@@ -92,11 +92,12 @@ const kernel = createKernel({ constitution, registry, audit });
 
 // ── 4. Audit is tamper-evident ──────────────────────────────────────────────
 {
-  assert.equal(audit.verify(), true, 'chain intact');
+  assert.equal(audit.verify(), true, 'MMR intact');
   assert.ok(audit.length() >= 3, 'every intent left a record');
-  audit._entries[0].leaf = 'deadbeefdeadbeef';          // simulate a retro-edit
+  assert.equal(audit.verifyInclusion(0), true, 'record 0 provably included under the root');
+  audit._records[0].leafData = 'deadbeefdeadbeef';      // simulate a retro-edit of a committed leaf
   assert.equal(audit.verify(), false, 'tamper detected');
-  ok('audit log is append-only and tamper-evident');
+  ok('audit log is append-only and tamper-evident (MMR inclusion proofs)');
 }
 
 // ── 5. Self-healing rewinds past a red-line ─────────────────────────────────

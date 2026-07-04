@@ -63,9 +63,11 @@ beam-stress surface; a structural inspector never sees dwelling-unit workflows.
 | `charter-compiler.js` | Compiles charter YAML predicates into real functions — **no `eval`/`new Function`**. |
 | `proof.js` | ZK `prove`/`verify` over a private witness (mock scheme). |
 | `proof-resolvers.js` | `hashIntegrityResolver` / `composeResolvers` for the VERIFY step. |
-| `audit.js` | `AuditLog` — append-only, tamper-evident hash chain. |
+| `audit.js` | `AuditLog` — append-only, tamper-evident, backed by a real Merkle Mountain Range with inclusion proofs. |
+| `mmr.js` | `MerkleMountainRange` / `verifyMmrProof` — real MMR accumulator over SHA-256, domain-separated, O(log n) inclusion proofs. |
 | `hash.js` | Real SHA-256 (FIPS 180-4), dependency-free and synchronous. |
-| `seal.js` | `issueSeal` / `verifySeal` — the portable credential. |
+| `ed25519.js` | `createEd25519Signer` / `verifyEd25519` — real Ed25519 signatures (the KMS/HSM seam). |
+| `seal.js` | `issueSeal` / `verifySeal` — the portable credential, Ed25519-signed. |
 | `self-healing.js` | Rewind to the last verified-safe state (enforces `rollback`). |
 | `pipeline.js` | `createKernel` — wires the loop. |
 
@@ -100,11 +102,11 @@ system is labeled as one.
 | `charter-compiler` | ✅ **live** | Real parser + interpreter, no `eval`. Sandbox-proven (no RCE), fails closed. |
 | gate / `invariant` | ✅ **live** | Compiled predicates enforced on every Intent. |
 | `self-healing` | ✅ **live** | Checkpoint / verify / rollback over any invariant + state. |
-| `audit.js` | 🟡 **honest mock** | Real SHA-256 hash chain, genuinely tamper-evident — but not yet the Moloch MMR. |
-| `seal.js` | 🟡 **honest mock** | Real hash over the body, but keyed with a shared secret — not a real issuer-key signature. |
+| `audit.js` + `mmr.js` | ✅ **live** | Real Merkle Mountain Range over SHA-256, domain-separated (leaf `0x00` / node `0x01`); O(log n) inclusion proofs, exhaustively + fuzz-tested with adversarial forgery cases. |
+| `seal.js` + `ed25519.js` | ✅ **live** | Real Ed25519 issuer signatures (native, synchronous); non-repudiation, no shared secret. Trust-anchorable via `trustedPublicKeys`. Key *custody* is dev-grade until a KMS/HSM backs the signer (the seam is in place). |
 | `proof-resolvers` | 🟡 **honest mock** | `hashIntegrityResolver`: real SHA-256, witness off-chain — but in-process, not a transferable/ZK proof. |
 | `proof.js` | 🟡 **honest mock** | Deterministic mock prover (`scheme: 'mock'`); the seam is real, the ZK scheme is not. |
-| `core/qssm-rs`, `core/moloch-mmr` | 🟡 **honest mock** | Compile and run, but placeholder (XOR-fold) hashing — stated in their own code. |
+| `core/qssm-rs`, `core/moloch-mmr` | 🟡 **honest mock** | Compile and run, but placeholder (XOR-fold) hashing. The audit MMR is now the real one in `mmr.js` — the `moloch-mmr` crate is superseded for the audit path and kept only as a WASM experiment. |
 | `services/*` (Rust) | ⚪ **planned** | ledger · verifier · api-gateway · report-generator — specified, not implemented. |
 | `inspector-mobile` (React Native) | ⚪ **planned** | Offline-first on-device capture & hashing (ADR-003). |
 | published `@sovereign/kernel` | ⚪ **planned** | Contract is hand-mirrored across repos today; publishing removes the duplication. |
@@ -129,12 +131,14 @@ system is labeled as one.
 
 ## 7. Verification
 
-**48 automated checks, green from fresh clones.** CI runs the kernel suite in Dominion
+**62 automated checks, green from fresh clones.** CI runs the kernel suite in Dominion
 and the shared-types typecheck + tests in Dignity on every push.
 
 | Suite | Repo(s) | Checks |
 |---|---|---|
 | `hash` (SHA-256 vectors + fuzz) | Dominion · Dignity | 3 + 3 |
+| `mmr` (inclusion proofs + fuzz + forgery) | Dominion | 8 |
+| `seal` (Ed25519 roundtrip + forgery) | Dominion | 6 |
 | `kernel` (gate / seal / self-heal) | Dominion | 5 |
 | `charter-compiler` | Dominion · Dignity | 8 + 7 |
 | `charter-compiler.security` | Dominion · Dignity | 5 + 5 |
@@ -147,11 +151,17 @@ Run locally: `npm test` in `kernel/` (Dominion) and in `packages/shared-types/` 
 
 ## 8. Roadmap — what honesty says is still owed
 
+> For the *sequenced* plan, the credential/infrastructure gaps, and the trust-model
+> decision that gates the crypto work, see [`ROADMAP.md`](ROADMAP.md). The summary:
+
 **Cryptography**
-- Real zero-knowledge proofs — QSSM post-quantum lattice **or** a curve-based SNARK
-  (pick one per deployment, state it).
-- The real Moloch Merkle Mountain Range behind the audit chain.
-- A real issuer-key signature scheme for the Seal.
+- ✅ *Done (Tier 1):* the real Merkle Mountain Range behind the audit log (`mmr.js`).
+- ✅ *Done (Tier 1):* a real issuer-key signature scheme for the Seal (Ed25519, `ed25519.js`).
+- Still owed: production key custody for the Seal signer — a KMS/HSM behind the
+  `createEd25519Signer` seam, with a rotation policy (dev keys today).
+- Still owed: real zero-knowledge proofs — QSSM post-quantum lattice **or** a curve-based
+  SNARK (a Dominion/AEC differentiator; deliberately scoped out of the PII-free Housing
+  path per `ROADMAP.md` §0).
 
 **Product surfaces**
 - Dignity's Rust services: ledger, verifier, api-gateway, report-generator.
