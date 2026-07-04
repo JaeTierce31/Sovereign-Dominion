@@ -17,7 +17,8 @@
     "audit": "npm audit && npx snyk test",
     "build:wasm": "wasm-pack build src/search/sovereign-search --target web && wasm-pack build src/trust/qssm-rs --target web",
     "deploy:workers": "wrangler deploy -c worker/wrangler.supplier.toml && wrangler deploy -c worker/wrangler.weather.toml && wrangler deploy -c worker/wrangler.solar.toml",
-    "deploy:contracts": "hardhat run scripts/deploySupplierRegistry.ts --network polygon && hardhat run scripts/deployChangeOrderLog.ts --network polygon"
+    "deploy:contracts": "hardhat run scripts/deploySupplierRegistry.ts --network polygon && hardhat run scripts/deployChangeOrderLog.ts --network polygon",
+    "perf:report": "lighthouse-ci https://0b2172da.sovereign-dominion.pages.dev --output json --output-path ./lighthouse-report.json"
   },
   "dependencies": {
     "@automerge/automerge": "^3.0.0",

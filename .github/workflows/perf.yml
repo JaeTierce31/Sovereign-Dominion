@@ -1,0 +1,20 @@
+---
+name: 'Perf: automated Lighthouse checks (preview)'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v4
+        with:
+          urls: ${{ github.event.pull_request.body }}
+          upload: 'json'
