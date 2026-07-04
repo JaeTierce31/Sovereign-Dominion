@@ -147,6 +147,9 @@ Run locally: `npm test` in `kernel/` (Dominion) and in `packages/shared-types/` 
 
 ## 8. Roadmap — what honesty says is still owed
 
+> For the *sequenced* plan, the credential/infrastructure gaps, and the trust-model
+> decision that gates the crypto work, see [`ROADMAP.md`](ROADMAP.md). The summary:
+
 **Cryptography**
 - Real zero-knowledge proofs — QSSM post-quantum lattice **or** a curve-based SNARK
   (pick one per deployment, state it).
