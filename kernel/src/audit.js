@@ -1,39 +1,70 @@
-// Immutable audit — tamper-evident, append-only log.
-// Skeleton stand-in for the Moloch MMR (core/moloch-mmr): a hash chain where
-// each entry commits to the previous root, so any retro-edit changes the root.
-// Same behaviour a real MMR gives; swap in the WASM MMR for production roots.
+// Immutable audit — tamper-evident, append-only log, backed by a real Merkle
+// Mountain Range (mmr.js) over the real SHA-256 primitive (hash.js).
+//
+// Each appended entry is frozen into a positioned record; the record's SHA-256
+// commitment becomes an MMR leaf. This keeps the previous behaviour (any
+// retro-edit changes the root) AND adds what a hash-chain can't give: O(log n)
+// **inclusion proofs** a third party can verify from the root alone (proof() /
+// verifyInclusion()). This replaces both the old hash-chain here and the
+// placeholder `core/moloch-mmr` crate's non-SHA-256 hashing.
+//
+// Public API is unchanged (append/root/length/entries/verify) so callers —
+// pipeline.js's OBSERVE step, the integration tests — keep working; proof() and
+// verifyInclusion() are additive.
 
 import { hash } from './hash.js';
+import { MerkleMountainRange, verifyMmrProof } from './mmr.js';
 
 export class AuditLog {
   constructor() {
-    this._entries = [];
-    this._root = hash('sovereign-genesis');
+    this._records = [];   // [{ record, leafData }]
+    this._mmr = new MerkleMountainRange();
+    this._committedRoot = this._mmr.root();   // EMPTY_ROOT until the first append
   }
 
-  /** Append an entry; returns its commitment. Entries are never mutated. */
+  /** Append an entry; returns { index, leaf, root }. Entries are never mutated. */
   append(entry) {
-    const index = this._entries.length;
+    const index = this._records.length;
     const record = Object.freeze({ index, at: new Date().toISOString(), entry: freezeDeep(entry) });
-    const leaf = hash({ prev: this._root, record });
-    this._root = leaf;
-    this._entries.push({ record, leaf });
-    return { index, leaf, root: this._root };
+    const leafData = hash(record);                    // real SHA-256 commitment to the record
+    const { leafHash, root } = this._mmr.append(leafData);
+    this._records.push({ record, leafData });
+    this._committedRoot = root;
+    return { index, leaf: leafHash, root };
   }
 
-  root() { return this._root; }
-  length() { return this._entries.length; }
-  entries() { return this._entries.map(e => e.record); }
+  root() { return this._committedRoot; }
+  length() { return this._records.length; }
+  entries() { return this._records.map((r) => r.record); }
 
-  /** Recompute the chain; true iff nothing has been tampered with. */
-  verify() {
-    let root = hash('sovereign-genesis');
-    for (const { record, leaf } of this._entries) {
-      const expect = hash({ prev: root, record });
-      if (expect !== leaf) return false;
-      root = leaf;
+  /** An MMR inclusion proof for the record at `index`. */
+  proof(index) {
+    if (index < 0 || index >= this._records.length) {
+      throw new RangeError(`audit index ${index} out of range (length ${this._records.length})`);
     }
-    return root === this._root;
+    return this._mmr.proof(index);
+  }
+
+  /** Verify that record `index` is genuinely committed under the current root. */
+  verifyInclusion(index) {
+    if (index < 0 || index >= this._records.length) return false;
+    const { record, leafData } = this._records[index];
+    if (hash(record) !== leafData) return false;      // record was retro-edited
+    return verifyMmrProof(leafData, this._mmr.proof(index), this._committedRoot);
+  }
+
+  /**
+   * Full-log integrity check: every stored record still hashes to its committed
+   * leaf, and rebuilding the MMR from those leaves reproduces the committed root.
+   * True iff nothing has been tampered with.
+   */
+  verify() {
+    const rebuilt = new MerkleMountainRange();
+    for (const { record, leafData } of this._records) {
+      if (hash(record) !== leafData) return false;    // a record was edited under its leaf
+      rebuilt.append(leafData);
+    }
+    return rebuilt.root() === this._committedRoot;
   }
 }
 

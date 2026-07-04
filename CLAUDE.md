@@ -46,8 +46,9 @@ bypasses the gate. AEC and Housing differ only in the handlers + invariants they
 
 Key modules in `kernel/src/`: `pipeline.js` (`createKernel`), `intent.js`, `invariant.js`
 (`Constitution`), `capability-registry.js`, `charter-compiler.js` (YAML → predicates),
-`proof.js` + `proof-resolvers.js` (VERIFY step), `audit.js`, `hash.js` (**real SHA-256**),
-`seal.js`, `self-healing.js`.
+`proof.js` + `proof-resolvers.js` (VERIFY step), `audit.js` + `mmr.js` (**real MMR** audit
+with inclusion proofs), `hash.js` (**real SHA-256**), `seal.js` + `ed25519.js` (**real
+Ed25519** signatures; the KMS/HSM seam), `self-healing.js`.
 
 The Constitution lives in [`constitution/`](constitution/) as YAML charters, compiled to
 real predicates by `charter-compiler.js`. `charter.housing-inspection.example.yaml` is the
@@ -60,7 +61,7 @@ active one; `charter.example.yaml` is a kept illustrative (superseded-domain) sk
 **Kernel** (the code most work touches) — no dependencies to build, one dev dep for tests:
 
 ```bash
-cd kernel && npm install && npm test   # runs all 6 suites; keep them green
+cd kernel && npm install && npm test   # runs all 8 suites; keep them green
 ```
 
 Add new kernel tests as `kernel/test/*.test.mjs` and wire them into the `test` script in
@@ -102,13 +103,15 @@ exercised the kernel.
 ## What's real vs. mock right now (summary — `PLATFORM.md` is authoritative)
 
 - ✅ **Real:** SHA-256 (`hash.js`), the charter compiler + gate, self-healing runtime,
-  the Intent/registry/loop.
-- 🟡 **Honest mock:** `audit.js` (real hash chain, not the Moloch MMR), `seal.js`
-  (keyed hash, not a real issuer signature), `proof.js` + `proof-resolvers.js`
-  (in-process, not transferable/ZK), the `core/qssm-rs` + `core/moloch-mmr` Rust crates
-  (placeholder hashing).
+  the Intent/registry/loop, the audit **Merkle Mountain Range** (`mmr.js` + `audit.js`,
+  with O(log n) inclusion proofs), and **Ed25519** seal signatures (`ed25519.js` + `seal.js`).
+- 🟡 **Honest mock:** `proof.js` + `proof-resolvers.js` (in-process, not transferable/ZK),
+  the `core/qssm-rs` + `core/moloch-mmr` Rust crates (placeholder hashing — the audit MMR
+  is now the real `mmr.js`, so the crate is superseded for that path).
 - ⚪ **Planned:** the Rust services + React Native app (Dignity), a published
-  `@sovereign/kernel`, real ZK / real MMR / real signatures.
+  `@sovereign/kernel`, real ZK (Dominion/AEC only), production **key custody** (a KMS/HSM
+  behind the `createEd25519Signer` seam — the scheme is real, custody is dev-grade).
 
-The current highest-leverage in-session work is **Tier 1** of `ROADMAP.md`: real Ed25519
-seal signatures and a real Merkle Mountain Range — pending the trust-model decision (§0).
+**Tier 1 of `ROADMAP.md` is done** (real Ed25519 signatures + real MMR — two 🟡→✅). Next:
+enable GitHub Actions so the 62 checks gate merges, record the trust-model ADR in
+Sovereign-Dignity, then production key custody and Tier 2 persistence.

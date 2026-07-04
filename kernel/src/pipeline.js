@@ -8,6 +8,7 @@
 
 import { verify as verifyProof } from './proof.js';
 import { issueSeal } from './seal.js';
+import { createEd25519Signer } from './ed25519.js';
 
 /**
  * @param {object} deps
@@ -15,8 +16,11 @@ import { issueSeal } from './seal.js';
  * @param {import('./capability-registry.js').CapabilityRegistry} deps.registry
  * @param {import('./audit.js').AuditLog} deps.audit
  * @param {(id:string)=>object|undefined} [deps.proofResolver]  supplies a proof for a required id
+ * @param {object} [deps.signer]  Ed25519 signer for the Seal; defaults to an ephemeral
+ *   per-kernel key (the KMS/HSM seam — inject a KMS-backed signer in production).
  */
-export function createKernel({ constitution, registry, audit, proofResolver = () => undefined }) {
+export function createKernel({ constitution, registry, audit, proofResolver = () => undefined, signer }) {
+  const sealSigner = signer || createEd25519Signer();
   async function submitIntent(intent, context = {}) {
     const ctx = { intent, subject: intent.subject, now: () => Date.now(), ...context };
 
@@ -62,10 +66,10 @@ export function createKernel({ constitution, registry, audit, proofResolver = ()
       claims: { action: intent.action, domain: intent.domain },
       proof: proofs[0] || null,
       auditRoot: rec.root,
-    });
+    }, sealSigner);
 
     return { status: 'sealed', result, audit: rec, seal };
   }
 
-  return { submitIntent };
+  return { submitIntent, signer: sealSigner };
 }

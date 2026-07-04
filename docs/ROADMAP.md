@@ -71,15 +71,19 @@ path.** Start those in parallel with the code, not after.
 - [ ] **Make the trust-model decision** (§0) and write it as an ADR in Sovereign-Dignity.
   Cheapest, highest-leverage act on the list — prevents building the wrong crypto.
 
-### Tier 1 — make the trust real *(mostly buildable in-session)*
-- [ ] **Real Ed25519 issuer signatures** replacing the keyed-hash "signature" in
-  `kernel/src/seal.js`. Node has native Ed25519. **Single highest-leverage crypto
-  upgrade** — non-repudiation is the actual NSPIRE requirement. → moves `seal.js` 🟡→✅
-- [ ] **Real Merkle Mountain Range** replacing the hash-chain (and the mock `moloch-mmr`
-  crate), giving genuine inclusion/consistency proofs on the SHA-256 already present. →
-  moves `audit.js` 🟡→✅
-- [ ] **Resolve the ZK claim** per the decision — one honest predicate with a real
-  library, or explicitly scope ZK out of Housing and document it as Dominion-only.
+### Tier 1 — make the trust real *(mostly buildable in-session)* — **✅ landed**
+- [x] **Real Ed25519 issuer signatures** replacing the keyed-hash "signature" in
+  `kernel/src/seal.js` (`kernel/src/ed25519.js` is the KMS/HSM seam). Native, synchronous,
+  non-repudiable; trust-anchorable via `trustedPublicKeys`. **Done** → `seal.js` 🟡→✅.
+  *Remaining:* production key custody (KMS/HSM behind the signer seam) + rotation (§1 #4).
+- [x] **Real Merkle Mountain Range** (`kernel/src/mmr.js`) replacing the hash-chain in
+  `audit.js`, giving genuine O(log n) inclusion proofs on the SHA-256 already present.
+  Domain-separated (leaf `0x00` / node `0x01`), exhaustively + fuzz-tested with adversarial
+  forgery cases. **Done** → `audit.js` 🟡→✅. (Supersedes the mock `moloch-mmr` crate for
+  the audit path.)
+- [x] **Resolve the ZK claim** — scoped ZK **out of** the PII-free Housing domain (which
+  needs integrity + non-repudiation + tamper-evidence, all now real), keeping ZK as a
+  Dominion/AEC differentiator. Decision recorded in §0; ADR to land in Sovereign-Dignity.
 
 ### Tier 2 — make it persist *(needs your creds)*
 - [ ] **Publish `@sovereign/kernel`** (#2) — one shared contract instead of a hand-mirror.
@@ -101,14 +105,19 @@ path.** Start those in parallel with the code, not after.
 
 ## 3. Recommended immediate next move
 
-The highest-leverage work achievable **entirely in-session, no credentials** is **Tier 1**:
-replace the mock seal signature with real **Ed25519** non-repudiation and the hash-chain
-with a real **Merkle Mountain Range** — turning two of the three 🟡 honest-mocks into ✅
-real. That is the difference between "impressive prototype" and "the trust is actually
-real," done with the same rigor as the rest (known-answer vectors + adversarial tests).
+**Tier 1 is done** (Ed25519 seal signatures + real MMR audit — see the checked boxes
+above; two of the three 🟡 honest-mocks are now ✅). The trust on the Housing path is now
+genuinely real: integrity (SHA-256), tamper-evidence (MMR with inclusion proofs), and
+non-repudiation (Ed25519). That was the "impressive prototype → the trust is actually real"
+step, done with the same rigor as the rest (known-answer vectors + fuzz + adversarial tests).
 
-Do it **after** the trust-model call (§0), so the signature scheme is the right one
-(e.g. if selective disclosure is ever needed, the path would bend toward BBS+ instead).
+The next highest-leverage moves, in order:
+1. **Tier 0 free wins** — enable GitHub Actions (§2 Tier 0 #1) so the 62 checks gate merges,
+   and land the trust-model ADR in Sovereign-Dignity (the §0 decision is made; record it).
+2. **Production key custody** — put a KMS/HSM behind the `createEd25519Signer` seam with a
+   rotation policy (§1 #4). The signature scheme is real; custody is the remaining gap.
+3. **Tier 2 persistence** — publish `@sovereign/kernel` (kills the hand-mirror) and build the
+   one real `ledger` vertical slice (needs Supabase creds, §1 #3).
 
 ---
 
