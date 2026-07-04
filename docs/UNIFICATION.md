@@ -1,5 +1,9 @@
 # Unification Spec — Sovereign Dominion + Sovereign Dignity
 
+> This document is the **spec** (the intended design). For the current **status** — what
+> is actually built, what is an honest placeholder, and what is not yet built — see
+> [`PLATFORM.md`](PLATFORM.md).
+
 **Status:** Draft (kernel side), domain corrected. The domain layer was originally
 guessed at before the `Sovereign-Dignity` repository could be reviewed, and that guess
 was wrong: an earlier draft of this document assumed a homeless-services HMIS domain
