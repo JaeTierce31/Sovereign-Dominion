@@ -9,6 +9,8 @@
 import { verify as verifyProof } from './proof.js';
 import { issueSeal } from './seal.js';
 import { createEd25519Signer } from './ed25519.js';
+import { nullLedger } from './ledger.js';
+import { hash } from './hash.js';
 
 /**
  * @param {object} deps
@@ -18,8 +20,10 @@ import { createEd25519Signer } from './ed25519.js';
  * @param {(id:string)=>object|undefined} [deps.proofResolver]  supplies a proof for a required id
  * @param {object} [deps.signer]  Ed25519 signer for the Seal; defaults to an ephemeral
  *   per-kernel key (the KMS/HSM seam — inject a KMS-backed signer in production).
+ * @param {object} [deps.ledger]  durable store for sealed records; defaults to a no-op.
+ *   Inject an InMemoryLedger (dev) or a Supabase-backed ledger (prod) — the Tier 2 seam.
  */
-export function createKernel({ constitution, registry, audit, proofResolver = () => undefined, signer }) {
+export function createKernel({ constitution, registry, audit, proofResolver = () => undefined, signer, ledger = nullLedger }) {
   const sealSigner = signer || createEd25519Signer();
   async function submitIntent(intent, context = {}) {
     const ctx = { intent, subject: intent.subject, now: () => Date.now(), ...context };
@@ -61,15 +65,25 @@ export function createKernel({ constitution, registry, audit, proofResolver = ()
     const rec = audit.append({ type: 'intent.executed', intent: intent.id, action: intent.action, domain: intent.domain });
 
     // 5. SEAL — mint the portable credential against the fresh audit root.
+    // The seal commits to *what* the handler produced (resultRef), not just the
+    // action name — so the credential binds the actual outcome (e.g. a Visual
+    // domain's generation result + its C2PA-style provenance manifest hash).
     const seal = issueSeal({
       subject: intent.subject,
-      claims: { action: intent.action, domain: intent.domain },
+      claims: {
+        action: intent.action,
+        domain: intent.domain,
+        resultRef: result === undefined ? null : hash(result),
+      },
       proof: proofs[0] || null,
       auditRoot: rec.root,
     }, sealSigner);
 
+    // 6. PERSIST — durably store the sealed record (no-op unless a ledger is injected).
+    ledger.store({ id: seal.id, seal, auditRoot: rec.root, intentId: intent.id, action: intent.action });
+
     return { status: 'sealed', result, audit: rec, seal };
   }
 
-  return { submitIntent, signer: sealSigner };
+  return { submitIntent, signer: sealSigner, ledger };
 }

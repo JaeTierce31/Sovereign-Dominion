@@ -67,7 +67,8 @@ beam-stress surface; a structural inspector never sees dwelling-unit workflows.
 | `mmr.js` | `MerkleMountainRange` / `verifyMmrProof` — real MMR accumulator over SHA-256, domain-separated, O(log n) inclusion proofs. |
 | `hash.js` | Real SHA-256 (FIPS 180-4), dependency-free and synchronous. |
 | `ed25519.js` | `createEd25519Signer` / `verifyEd25519` — real Ed25519 signatures (the KMS/HSM seam). |
-| `seal.js` | `issueSeal` / `verifySeal` — the portable credential, Ed25519-signed. |
+| `seal.js` | `issueSeal` / `verifySeal` — the portable credential, Ed25519-signed; binds the handler result via `resultRef`. |
+| `ledger.js` | `InMemoryLedger` / `nullLedger` — durable store for sealed records (the Tier 2 Supabase seam). |
 | `self-healing.js` | Rewind to the last verified-safe state (enforces `rollback`). |
 | `pipeline.js` | `createKernel` — wires the loop. |
 
@@ -107,7 +108,9 @@ system is labeled as one.
 | `proof-resolvers` | 🟡 **honest mock** | `hashIntegrityResolver`: real SHA-256, witness off-chain — but in-process, not a transferable/ZK proof. |
 | `proof.js` | 🟡 **honest mock** | Deterministic mock prover (`scheme: 'mock'`); the seam is real, the ZK scheme is not. |
 | `core/qssm-rs`, `core/moloch-mmr` | 🟡 **honest mock** | Compile and run, but placeholder (XOR-fold) hashing. The audit MMR is now the real one in `mmr.js` — the `moloch-mmr` crate is superseded for the audit path and kept only as a WASM experiment. |
-| `services/*` (Rust) | ⚪ **planned** | ledger · verifier · api-gateway · report-generator — specified, not implemented. |
+| `ledger.js` (persistence) | 🟡 **honest mock** | Real in-process `InMemoryLedger` — sealed records stored + retrievable, but not durable across restarts. Durable Supabase/Postgres backend is the seam (needs creds). |
+| `domain-visual` (generator + C2PA) | 🟡 **honest mock** | Real generator interface + offline stub (no image fabricated without a Bria key) and a C2PA-*shaped*, SHA-256-hashed, Ed25519-sealed provenance manifest — but not a live Bria render nor a cert-signed C2PA manifest. |
+| `services/*` (Rust) | ⚪ **planned** | ledger · verifier · api-gateway · report-generator — specified, not implemented (the JS `InMemoryLedger` is the in-kernel stand-in). |
 | `inspector-mobile` (React Native) | ⚪ **planned** | Offline-first on-device capture & hashing (ADR-003). |
 | published `@sovereign/kernel` | ⚪ **planned** | Contract is hand-mirrored across repos today; publishing removes the duplication. |
 
@@ -131,7 +134,7 @@ system is labeled as one.
 
 ## 7. Verification
 
-**71 automated checks, green from fresh clones.** CI runs the kernel suite in Dominion
+**78 automated checks, green from fresh clones.** CI runs the kernel suite in Dominion
 and the shared-types typecheck + tests in Dignity on every push.
 
 | Suite | Repo(s) | Checks |
@@ -145,6 +148,7 @@ and the shared-types typecheck + tests in Dignity on every push.
 | `verify-step` | Dominion | 4 |
 | `housing-domain.integration` | Dominion | 8 |
 | `visual-generation.integration` | Dominion | 9 |
+| `visual-pipeline.integration` (generator + C2PA + ledger seams) | Dominion | 7 |
 
 Run locally: `npm test` in `kernel/` (Dominion) and in `packages/shared-types/` (Dignity).
 

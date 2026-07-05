@@ -76,23 +76,23 @@ claims are — as of now — honest for this domain too.
 
 ---
 
-## 4. What it would take to go further (honestly labeled)
+## 4. The three seams — built as interfaces, credentialed backends pending
 
-The implemented slice governs the **blueprint and its release**. It does **not** call an
-image model. Extending toward the draft's fuller vision requires real, external pieces —
-each a genuine dependency, not a line of code here:
+The governed-generation path now runs end to end (`kernel/test/visual-pipeline.integration.test.mjs`),
+with three seams added the honest way — the **interface is real and tested; the external
+backend is the credentialed swap point** (the same pattern as the Ed25519 signer's KMS seam).
+See [`domain-visual/`](../domain-visual/).
 
-- **A Bria enterprise API key** to actually generate from a `structured_prompt` (Fibo
-  models). Today the handler validates and seals a blueprint; it does not render an image.
-- **A C2PA signing library** to emit real content-authenticity metadata. Today
-  `syntheticMarked` is a declared boolean the gate enforces, not a signed C2PA manifest.
-- **A persistence layer** (the ROADMAP's Tier 2 `ledger`) to store sealed blueprints and
-  their audit roots durably. Today the MMR is in-process.
-- **Real ZK** *only if* selective disclosure of a blueprint is ever needed — deliberately
-  out of scope, consistent with `ROADMAP.md` §0 (ZK stays a Dominion/AEC differentiator).
+| Seam | Real today | Credentialed step (pending) |
+|---|---|---|
+| **Bria generator** (`domain-visual/generator.js`) | `createBriaGenerator()` + offline stub — governs + seals the blueprint, **does not fabricate an image** (`rendered:false`). The live `fetch` path is wired. | A Bria enterprise API key → renders the `structured_prompt`. |
+| **C2PA provenance** (`domain-visual/provenance.js`) | `buildC2paManifest()` — a C2PA-*shaped* assertion, real SHA-256, **sealed into the credential** via the seal's `resultRef`. | A signing cert + c2pa toolchain → an interoperable cert-signed `.c2pa` manifest (`signed:false` today). |
+| **Ledger persistence** (`kernel/src/ledger.js`) | `InMemoryLedger` — every sealed record is durably stored + retrievable in-process. | A Supabase project + service key → a durable Postgres-backed ledger (ROADMAP Tier 2, §1 #3). |
 
-If ZK/OPA/TLA+/a real agent council are wanted, they are legitimate future work — but they
-must be built and labeled honestly (🟡→✅ in `PLATFORM.md`), never asserted before they exist.
+Still deliberately **out of scope:** real ZK (only if selective disclosure of a blueprint is
+ever needed — it stays a Dominion/AEC differentiator per `ROADMAP.md` §0), and OPA/TLA+/a real
+agent council (legitimate future work, but only if built and labeled honestly — never asserted
+before they exist).
 
 ---
 

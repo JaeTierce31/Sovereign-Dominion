@@ -87,10 +87,12 @@ path.** Start those in parallel with the code, not after.
 
 ### Tier 2 — make it persist *(needs your creds)*
 - [ ] **Publish `@sovereign/kernel`** (#2) — one shared contract instead of a hand-mirror.
-- [ ] **One real vertical slice:** the `ledger` Rust service wrapping the kernel loop
-  against Supabase (#3), with exactly one persisted write path:
-  *submit evidence → gate → sign → append to MMR → seal → store.* One honest path beats
-  four stubbed services.
+- [~] **One real vertical slice:** the persisted write path
+  *submit → gate → sign → append to MMR → seal → store* is **wired in-kernel** now — the
+  pipeline persists every sealed record through a `ledger` seam (`kernel/src/ledger.js`),
+  proven end to end by the Visual domain slice (`visual-pipeline.integration.test.mjs`).
+  The `InMemoryLedger` is real but in-process; **remaining:** swap it for a durable
+  Supabase/Postgres-backed ledger (#3) — the interface is the seam, the backend needs creds.
 
 ### Tier 3 — make it usable *(needs dev accounts)*
 - [ ] Thin React Native inspector flow: capture photo → hash on-device → submit Intent
