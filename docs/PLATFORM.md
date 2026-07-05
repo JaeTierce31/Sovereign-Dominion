@@ -44,7 +44,7 @@ they register — the engine is identical. **That is the merge.**
 | Tier | What lives here | State |
 |---|---|---|
 | **Surfaces** | Inspector apps, owner/PHA attestation, funder reporting | per-domain, **planned** |
-| **Domain** | Dignity/Housing (NSPIRE inspection + evidence chain) · Dominion/AEC (IBC 1604 + demo) | Housing = spec layer · AEC = reference demo |
+| **Domain** | Dignity/Housing (NSPIRE inspection + evidence chain) · Dominion/AEC (IBC 1604 + demo) · Dominion/Visual (governed Bria-style VGL blueprints) | Housing = spec layer · AEC = reference demo · Visual = charter + kernel integration ([`BRIA-VGL-SYNTHESIS.md`](BRIA-VGL-SYNTHESIS.md)) |
 | **Kernel** | `@sovereign/kernel` — Intent · gate · proof/resolvers · self-healing · registry · audit · Seal | **live** |
 | **Constitution** | Machine-checkable invariants (evidence integrity, custody, credentialing, dual attestation, retention) | **live** |
 
@@ -131,7 +131,7 @@ system is labeled as one.
 
 ## 7. Verification
 
-**62 automated checks, green from fresh clones.** CI runs the kernel suite in Dominion
+**71 automated checks, green from fresh clones.** CI runs the kernel suite in Dominion
 and the shared-types typecheck + tests in Dignity on every push.
 
 | Suite | Repo(s) | Checks |
@@ -144,6 +144,7 @@ and the shared-types typecheck + tests in Dignity on every push.
 | `charter-compiler.security` | Dominion · Dignity | 5 + 5 |
 | `verify-step` | Dominion | 4 |
 | `housing-domain.integration` | Dominion | 8 |
+| `visual-generation.integration` | Dominion | 9 |
 
 Run locally: `npm test` in `kernel/` (Dominion) and in `packages/shared-types/` (Dignity).
 

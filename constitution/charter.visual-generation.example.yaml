@@ -1,0 +1,100 @@
+# Illustrative charter sketch for the Visual Generation domain — NOT legally reviewed.
+#
+# This is the honest, grounded core of the "Constitutional VGL" idea: a Bria-style
+# Visual Generation Language blueprint (the structured_prompt) becomes the *payload* of
+# a Sovereign kernel Intent, and the kernel gate enforces governance invariants over it
+# before anything is sealed. It is the third sibling of the AEC and Housing domains —
+# same kernel loop (Intent → Gate → Verify → Execute → Observe → Seal), different
+# handlers + invariants. Nothing here requires Z3/OPA/TLA+/a multi-agent council; those
+# are aspirational and deliberately NOT claimed (see docs/BRIA-VGL-SYNTHESIS.md).
+#
+# The invariants below map Bria's real safety layers onto real kernel checks:
+#   - licensed inputs      (Bria pre-training layer)      → provenance.licensed_inputs
+#   - content moderation   (Bria in-generation layer)     → safety.moderation_cleared
+#   - synthetic marking    (Bria post-generation / C2PA)  → disclosure.synthetic_marking
+#   - uncertainty visible  (Sovereign crypto-honesty)     → epistemic.confidence_visible
+#   - humans attest        (Sovereign non-negotiable)     → governance.human_release_attestation
+#   - content integrity    (real SHA-256, hash.js)        → provenance.blueprint_integrity
+#   - append-only audit    (real MMR, mmr.js)             → audit.append_only
+#
+# Field names are indicative; they bind to a real VGL model when a Bria client is wired.
+
+charter:
+  id: dominion.visual-generation
+  version: 0.1.0-draft
+  domain: visual
+
+invariants:
+
+  - id: provenance.blueprint_integrity
+    rationale: >
+      A VGL blueprint (Bria's structured_prompt) is content-addressed: the declared
+      blueprintHash must be the real SHA-256 of the blueprint bytes, so a blueprint can
+      never be swapped or edited under a fixed reference without detection.
+    appliesWhen: "action == 'visual.generate'"
+    mustHold: "intent.payload.blueprintHash != null
+               && intent.payload.blueprintHash == sha256(intent.payload.blueprintBytes)"
+    onViolation: block
+
+  - id: provenance.licensed_inputs
+    rationale: >
+      Every source asset a generation draws on must declare a license (Bria's 100%
+      licensed-data principle). An input with no license, or license 'none', is refused
+      — no scraped or unattributed material enters a governed generation.
+    appliesWhen: "action == 'visual.generate'"
+    mustHold: "all(intent.payload.sourceAssets, a => a.license != null && a.license != 'none')"
+    onViolation: block
+
+  - id: safety.moderation_cleared
+    rationale: >
+      The in-generation content-moderation step (prompt + input/output visual scans)
+      must report 'cleared' before the Intent proceeds. A pending or flagged moderation
+      result fails closed — the generation is blocked, never sealed on an unchecked pass.
+    appliesWhen: "action == 'visual.generate'"
+    mustHold: "intent.payload.moderation.status == 'cleared'"
+    onViolation: block
+
+  - id: epistemic.confidence_visible
+    rationale: >
+      Crypto honesty applied to output: a generated artifact must carry an explicit
+      confidence level from the known scale — uncertainty is never hidden. An absent or
+      out-of-scale confidence is a violation, not a silently-assumed 'high'.
+    appliesWhen: "action == 'visual.generate'"
+    mustHold: "intent.payload.epistemic.confidence == 'very_high'
+               || intent.payload.epistemic.confidence == 'high'
+               || intent.payload.epistemic.confidence == 'moderate'
+               || intent.payload.epistemic.confidence == 'low'
+               || intent.payload.epistemic.confidence == 'very_low'"
+    onViolation: block
+
+  - id: disclosure.synthetic_marking
+    rationale: >
+      Any generated or released artifact must be marked as synthetic (a C2PA-style
+      authenticity flag). This is disclosure, not decoration — an unmarked output may
+      not be generated or released.
+    appliesWhen: "action == 'visual.generate' || action == 'visual.release'"
+    mustHold: "intent.payload.output.syntheticMarked == true"
+    onViolation: block
+
+  - id: governance.human_release_attestation
+    rationale: >
+      Humans attest; AI assists. No governed asset is released on the model's say-so:
+      at least one human must attest before a release Seal. (This is the honest form of
+      the document's 'multi-agent consensus' — a real human sign-off, not a mocked
+      council of agents voting.)
+    appliesWhen: "action == 'visual.release'"
+    mustHold: "intent.payload.attestations.length >= 1
+               && all(intent.payload.attestations, a => a.kind == 'human')"
+    onViolation: block
+
+  - id: audit.append_only
+    rationale: "The audit log is tamper-evident and append-only (real MMR); deletions are recorded."
+    appliesWhen: "action startsWith 'audit.'"
+    mustHold: "action == 'audit.append'"
+    onViolation: block
+
+# Notes:
+# - onViolation: block → Intent refused before execution (gate), fail-closed.
+# - A throwing predicate is treated as a violation (e.g. a malformed confidence value).
+# - This charter governs the *blueprint and release* — it does not itself call a model.
+#   Wiring an actual Bria/Fibo generation call is a separate, credentialed step.
