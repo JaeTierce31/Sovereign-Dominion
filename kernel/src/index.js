@@ -7,6 +7,7 @@ export { Constitution, defineInvariant } from './invariant.js';
 export { CapabilityRegistry } from './capability-registry.js';
 export { AuditLog } from './audit.js';
 export { MerkleMountainRange, verifyMmrProof } from './mmr.js';
+export { InMemoryLedger, nullLedger } from './ledger.js';
 export { prove, verify } from './proof.js';
 export { hashIntegrityResolver, composeResolvers } from './proof-resolvers.js';
 export { createEd25519Signer, verifyEd25519 } from './ed25519.js';

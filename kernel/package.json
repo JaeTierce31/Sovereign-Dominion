@@ -11,7 +11,7 @@
     "src"
   ],
   "scripts": {
-    "test": "node test/hash.test.mjs && node test/mmr.test.mjs && node test/seal.test.mjs && node test/kernel.test.mjs && node test/charter-compiler.test.mjs && node test/charter-compiler.security.test.mjs && node test/verify-step.test.mjs && node test/housing-domain.integration.test.mjs && node test/visual-generation.integration.test.mjs"
+    "test": "node test/hash.test.mjs && node test/mmr.test.mjs && node test/seal.test.mjs && node test/kernel.test.mjs && node test/charter-compiler.test.mjs && node test/charter-compiler.security.test.mjs && node test/verify-step.test.mjs && node test/housing-domain.integration.test.mjs && node test/visual-generation.integration.test.mjs && node test/visual-pipeline.integration.test.mjs"
   },
   "devDependencies": {
     "js-yaml": "^5.2.1"
