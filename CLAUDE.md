@@ -9,6 +9,9 @@ repo **Sovereign-Dignity** (the HUD NSPIRE housing-inspection domain).
 1. [`docs/UNIFICATION.md`](docs/UNIFICATION.md) — the merge spec (intended design).
 2. [`docs/PLATFORM.md`](docs/PLATFORM.md) — current status + the real/honest-mock/planned matrix.
 3. [`docs/ROADMAP.md`](docs/ROADMAP.md) — the sequenced completion plan + the trust-model decision.
+4. [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) — the six-repo Sovereign Ecosystem map (portfolio
+   review, consolidation decisions: Peregrine.* → Sovereign-Development, hmis-platform →
+   Sovereign-Dignity, Peregrine as the ecosystem's developer platform).
 
 ---
 
