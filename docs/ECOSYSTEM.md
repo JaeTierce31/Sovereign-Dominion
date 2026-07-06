@@ -16,7 +16,10 @@ This document does three things:
 Read alongside [`UNIFICATION.md`](UNIFICATION.md) (the Dominion↔Dignity merge spec),
 [`PLATFORM.md`](PLATFORM.md) (the real/honest-mock/planned matrix), and
 [`ROADMAP.md`](ROADMAP.md) (the sequenced completion plan). Those three govern the
-*platform*; this document governs the *portfolio*.
+*platform*; this document governs the *portfolio*. Two normative companions
+generalize it: [`CDP-SPEC.md`](CDP-SPEC.md) — the Constitutional Domain Package
+contract every domain implements — and [`GOVERNANCE.md`](GOVERNANCE.md) — repository
+boundaries, dependency direction, and versioning.
 
 ---
 
