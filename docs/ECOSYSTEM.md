@@ -68,6 +68,11 @@ predecessor repo.
 
 ## 3. Layered ecosystem architecture
 
+> The layer model below has since been generalized into the **pillar architecture** —
+> [`PILLARS.md`](PILLARS.md) — where capabilities (not repositories) are the enduring
+> units, grouped into five layers with per-pillar honesty status. This section remains
+> the review-time snapshot.
+
 The [`UNIFICATION.md`](UNIFICATION.md) §3 stack, widened to the whole portfolio:
 
 ```

@@ -1,8 +1,9 @@
 # Ecosystem Governance — repository boundaries, dependency rules, versioning
 
 **Normative for all Sovereign Ecosystem repositories.** Companion to
-[`ECOSYSTEM.md`](ECOSYSTEM.md) (the map) and [`CDP-SPEC.md`](CDP-SPEC.md) (the domain
-contract). The failure mode this document exists to prevent: *governance logic
+[`ECOSYSTEM.md`](ECOSYSTEM.md) (the map), [`CDP-SPEC.md`](CDP-SPEC.md) (the domain
+contract), and [`PILLARS.md`](PILLARS.md) (the pillar architecture — capabilities as
+the enduring units, repos as implementation details). The failure mode this document exists to prevent: *governance logic
 embedded in apps instead of enforced by the kernel* — once domain rules leak into
 application code or kernel code grows domain nouns, auditability and the
 constitutional guarantee are gone.
