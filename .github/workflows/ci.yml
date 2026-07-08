@@ -52,6 +52,10 @@ jobs:
       - run: npm test
         working-directory: kernel
 
+  # The `secrets` context is not available in step `if:` expressions — using it
+  # there makes GitHub reject the whole workflow file (it showed up under its
+  # file path instead of its name, and no job ever ran). Both deploy jobs
+  # therefore probe the secret through env into a step output first.
   deploy-preview:
     if: github.ref != 'refs/heads/main'
     needs: [test]
@@ -61,7 +65,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '${{ env.NODE_VERSION }}' }
       - run: npm install && npm run build
-      - if: ${{ secrets.CF_API_TOKEN != '' }}
+      - id: cf
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: echo "configured=$([ -n "$CF_API_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - if: steps.cf.outputs.configured == 'true'
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
@@ -79,7 +87,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '${{ env.NODE_VERSION }}' }
       - run: npm install && npm run build
-      - if: ${{ secrets.CF_API_TOKEN != '' }}
+      - id: cf
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: echo "configured=$([ -n "$CF_API_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - if: steps.cf.outputs.configured == 'true'
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
