@@ -52,50 +52,10 @@ jobs:
       - run: npm test
         working-directory: kernel
 
-  # The `secrets` context is not available in step `if:` expressions — using it
-  # there makes GitHub reject the whole workflow file (it showed up under its
-  # file path instead of its name, and no job ever ran). Both deploy jobs
-  # therefore probe the secret through env into a step output first.
-  deploy-preview:
-    if: github.ref != 'refs/heads/main'
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '${{ env.NODE_VERSION }}' }
-      - run: npm install && npm run build
-      - id: cf
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: echo "configured=$([ -n "$CF_API_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - if: steps.cf.outputs.configured == 'true'
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: sovereign-dominion
-          directory: dist
-          branch: ${{ github.head_ref }}
-
-  deploy-production:
-    if: github.ref == 'refs/heads/main'
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '${{ env.NODE_VERSION }}' }
-      - run: npm install && npm run build
-      - id: cf
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: echo "configured=$([ -n "$CF_API_TOKEN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - if: steps.cf.outputs.configured == 'true'
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: sovereign-dominion
-          directory: dist
-          branch: main
+  # Deployment is owned by the Cloudflare Pages Git integration (it builds and
+  # deploys every push, and reports its own "Cloudflare Pages" check). The old
+  # deploy-preview/deploy-production jobs here duplicated that via the
+  # deprecated cloudflare/pages-action@v1 (bundles Wrangler v2, which no longer
+  # runs on current runners) — and their `secrets` reference in a step `if:`
+  # made GitHub reject this whole workflow file, so no job above ever ran.
+  # This workflow gates merges; Cloudflare deploys.
