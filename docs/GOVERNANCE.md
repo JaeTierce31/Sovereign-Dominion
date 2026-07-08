@@ -2,8 +2,9 @@
 
 **Normative for all Sovereign Ecosystem repositories.** Companion to
 [`ECOSYSTEM.md`](ECOSYSTEM.md) (the map), [`CDP-SPEC.md`](CDP-SPEC.md) (the domain
-contract), and [`PILLARS.md`](PILLARS.md) (the pillar architecture — capabilities as
-the enduring units, repos as implementation details). The failure mode this document exists to prevent: *governance logic
+contract), [`PILLARS.md`](PILLARS.md) (the pillar architecture — capabilities as
+the enduring units, repos as implementation details), and
+[`VALIDATION.md`](VALIDATION.md) (the validation protocol — claims require evidence). The failure mode this document exists to prevent: *governance logic
 embedded in apps instead of enforced by the kernel* — once domain rules leak into
 application code or kernel code grows domain nouns, auditability and the
 constitutional guarantee are gone.
@@ -95,8 +96,14 @@ Target state — every PR in every ecosystem repo is gated on:
    lint).
 
 **Status today:** the test suites exist and run; **GitHub Actions does not yet gate
-merges in Dominion** (`ROADMAP.md` Tier 0 #1 — still the cheapest outstanding win);
-the conformance + boundary automation is ⚪ not built. Saying "merges are
+merges in Dominion** (`ROADMAP.md` Tier 0 #1 — still the cheapest outstanding win).
+The kernel-side boundary checks are now **executable** —
+`kernel/test/governance-boundaries.test.mjs` (in `npm test`) enforces the §1
+forbidden-noun list, no-`eval`, zero runtime dependencies, and no imports escaping
+`kernel/src` (see `VALIDATION.md` §2–§3); the cross-repo conformance + dependency
+lint remains ⚪ not built. Every component must also be classifiable as
+pillar / purpose / status / implementation level — satisfied by the `PILLARS.md` §3
+register plus CDP manifests, no per-file metadata format. Saying "merges are
 constitutionally gated" before that lands would be an unlabeled mock — this section
 states the target, not an achievement.
 

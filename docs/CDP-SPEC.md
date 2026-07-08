@@ -194,6 +194,19 @@ Housing charter and non-negotiable for every CDP:
 2. Dual *human* attestation precedes any Seal; no confidence score substitutes.
 3. Reasoning provenance (engine, version, inputs-by-hash) belongs in the audit
    record when reasoning influenced an Intent.
+4. **Safety invariants are bounded and enumerable.** A CDP charters specific,
+   checkable rules (the Housing charter's enumerable NSPIRE rules with ordinal
+   severity are the precedent) — "universal harm detection" is not a chartable
+   claim. An unevaluated safety invariant **fails closed**: the kernel already
+   refuses on a throwing invariant, an unresolved required proof, or an unknown
+   action, and no CDP may weaken that to default-allow.
+5. **Clinical domains never place PHI in audit content.** For any CDP handling
+   protected health information (`cdp.mesi` when it materializes): audit leaves
+   carry hashes and **salted commitments** only — `H(salt ‖ event)` with the salt
+   held by the covered entity — so audit trees stay tamper-evident without a
+   reportable disclosure. HIPAA / 42 CFR Part 2 applicability is a design
+   constraint recorded now, binding on the domain's evidence rules from its first
+   artifact.
 
 A CDP that wants machine reasoning declares it in the manifest and routes it
 pre-Intent. Anything stronger requires amending this spec (major version).

@@ -33,6 +33,10 @@ matrix:
 | 🟡 **Emerging** | Real artifacts, incomplete | Specs/code exist and are used, but the pillar's core responsibility is not yet operational end-to-end |
 | ⚪ **Declared** | Named capability only | Exists as sections of governing documents; no implementation |
 
+The compact ⚪🟡✅ scale expands into two finer axes when precision matters — the
+DECLARED→VERIFIED component ladder and the E0–E4 invariant-enforcement levels —
+both defined in [`VALIDATION.md`](VALIDATION.md) §1.
+
 **Instantiation rule.** A ⚪ pillar lives as prose in a governing document — never as a
 fresh repo, service, or package. It graduates to 🟡/✅ only when it has (a) code that
 needs a boundary and (b) a consumer that needs the contract. The review consolidated
@@ -95,6 +99,13 @@ spine every layer's actions pass through when they carry trust consequences.
 | **Deployment** | Engineering | Promotion into trusted environments: releases, rollbacks, environments — first as a CDP, §4.5 | ⚪ | `cdp.development` design direction (`ECOSYSTEM.md` §3 honesty note) |
 | **Defense** | Governance | *Operational* security: key custody operations, identity/authz at surfaces, monitoring, threat detection, incident response — scope bounded, §4.2 | ⚪ | KMS/HSM seam named on `ROADMAP.md` (custody is dev-grade today) |
 
+**External-proposal mapping** (July 2026 review, decisions recorded in
+[`VALIDATION.md`](VALIDATION.md) §7): *FI-OS* → the Deliberation/Governance concepts,
+⚪; *"CCOS runtime"* → the existing kernel loop — no second runtime; *SER (Sovereign
+Evidence Registry)* → `audit.js` + `mmr.js` (✅) plus `ledger.js` persistence (🟡);
+*"Sovereign Kernel Service"* → `@sovereign/kernel` itself — no parallel
+implementation; *Compliance Engine* → charter compiler + gate (✅) with CI gating ⚪.
+
 ---
 
 ## 4. Constitutional bounds on specific pillars
@@ -144,6 +155,25 @@ charter change merged — becomes Intents through the kernel, gated by the plann
 `cdp.development` charter and sealed into the audit. That is the pillar's first
 incarnation. Estate tooling (Kubernetes, Terraform, multi-environment orchestration)
 stays ⚪ until a real deployment target needs it.
+
+### 4.6 Exit & Fork — capture must be worthless, not merely costly
+
+Adopted from the v5.1-draft governance review (its SD-009), the one external proposal
+that strengthens the trust model without adding infrastructure. As a constitutional
+bound on the whole ecosystem:
+
+- **(a)** any participant may withdraw at any time with a signed, portable, complete
+  export of their governance state and audit history;
+- **(b)** any faction may fork the constitutional state and continue under an amended
+  constitution, inheriting the hash-chained audit up to the fork point;
+- **(c)** no authority may abridge (a) or (b).
+
+Voice (challenge/dissent) and loyalty (incentives) alone cannot prevent capture; exit
+makes capturing an authority position worthless. Status: ⚪ design — but with a named
+path on primitives that are already real: a participant export is their **Ed25519
+Seals plus MMR inclusion proofs** (both portable and independently verifiable today);
+a fork is a new MMR seeded from a checkpointed root. No new service is required to
+honor this bound — only export/fork capabilities on the existing kernel.
 
 ---
 
