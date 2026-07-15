@@ -16,7 +16,10 @@ This document does three things:
 Read alongside [`UNIFICATION.md`](UNIFICATION.md) (the Dominion↔Dignity merge spec),
 [`PLATFORM.md`](PLATFORM.md) (the real/honest-mock/planned matrix), and
 [`ROADMAP.md`](ROADMAP.md) (the sequenced completion plan). Those three govern the
-*platform*; this document governs the *portfolio*.
+*platform*; this document governs the *portfolio*. Two normative companions
+generalize it: [`CDP-SPEC.md`](CDP-SPEC.md) — the Constitutional Domain Package
+contract every domain implements — and [`GOVERNANCE.md`](GOVERNANCE.md) — repository
+boundaries, dependency direction, and versioning.
 
 ---
 
@@ -64,6 +67,11 @@ predecessor repo.
 ---
 
 ## 3. Layered ecosystem architecture
+
+> The layer model below has since been generalized into the **pillar architecture** —
+> [`PILLARS.md`](PILLARS.md) — where capabilities (not repositories) are the enduring
+> units, grouped into five layers with per-pillar honesty status. This section remains
+> the review-time snapshot.
 
 The [`UNIFICATION.md`](UNIFICATION.md) §3 stack, widened to the whole portfolio:
 
